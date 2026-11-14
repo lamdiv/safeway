@@ -1,0 +1,16 @@
+node_modules/
+dist/
+.sites-runtime/
+.wrangler/
+.env
+.env.*
+!.env.example
+data/raw/
+outputs/
+*.log
+.DS_Store
+
+data/runtime/
+
+# Local, unused Sites hosting identity; this app is run locally.
+.openai/

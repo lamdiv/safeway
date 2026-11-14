@@ -1,0 +1,33 @@
+import test from 'node:test';import assert from 'node:assert/strict';import {readFile} from 'node:fs/promises';import {createHash} from 'node:crypto';
+import {buildDrainage,screenAssets,assessObservedExtent,summarize,inPolygon,gridIndex,validateGrid,validateImportedAssets,makeReport,compareRuns,cellCoordinate} from '../src/analysis.mjs';
+import {evidenceAsOf,assessHypotheses,contextAsOf,interpretationAsOf} from '../src/evidence.mjs';
+const load=f=>readFile(new URL('../public/data/'+f,import.meta.url),'utf8').then(JSON.parse);
+const [grid,assets,extent,manifest]=await Promise.all(['terrain.json','assets.json','observed-extent.geojson','manifest.json'].map(load));
+const drainage=buildDrainage(grid);
+test('Coordinates respect WGS84 bounds and cell centres round-trip',()=>{for(const i of [0,145,5000,grid.width*grid.height-1])assert.equal(gridIndex(grid,cellCoordinate(grid,i)),i);assert.equal(gridIndex(grid,[0,0]),-1);assert.equal(gridIndex(grid,[NaN,28]),-1);});
+test('No-data terrain is not silently treated as zero elevation',()=>{const g={width:3,height:3,bbox:[0,0,3,3],elevation:[1,1,1,1,null,1,1,1,1]};const d=buildDrainage(g,{channelCells:1});const [a]=screenAssets([{id:'unknown',coordinates:[1.5,1.5]}],d);assert.equal(a.band,'unknown');assert.equal(a.score,null);});
+test('Drainage parent paths are acyclic, terminate, and do not increase filled elevation',()=>{for(let start=0;start<drainage.parent.length;start+=53){let i=start,n=0;while(drainage.parent[i]>=0){const j=drainage.parent[i];assert.ok(drainage.filled[j]<=drainage.filled[i]);i=j;assert.ok(++n<drainage.parent.length);}}});
+test('Depression is filled to its spill elevation without inventing negative relative heights',()=>{const d=buildDrainage({width:3,height:3,bbox:[0,0,3,3],elevation:[[5,5,5],[5,-10,5],[5,5,5]].flat()},{channelCells:1});assert.equal(d.filled[4],5);assert.equal(d.hand[4],0);});
+test('Scenario exposure is monotone as assumed stage increases',()=>{const low=screenAssets(assets,drainage,{stage:10,spread:.25});const high=new Map(screenAssets(assets,drainage,{stage:20,spread:.25}).map(a=>[a.id,a]));for(const a of low)assert.ok(high.get(a.id).score>=a.score);assert.ok(compareRuns(low,[...high.values()]).length>0);});
+test('Zero stage does not count dry channel cells as exposed',()=>{assert.equal(summarize(screenAssets(assets,drainage,{stage:0})).higher,0);});
+test('Invalid stages and sensitivity are rejected',()=>{for(const stage of [NaN,-1,61])assert.throws(()=>screenAssets(assets,drainage,{stage}));assert.throws(()=>screenAssets(assets,drainage,{stage:1,spread:2}));});
+test('Polygon holes and multipolygon boundaries are respected',()=>{const polygon=[[[0,0],[10,0],[10,10],[0,10],[0,0]],[[4,4],[6,4],[6,6],[4,6],[4,4]]];assert.equal(inPolygon([2,2],polygon),true);assert.equal(inPolygon([5,5],polygon),false);assert.equal(inPolygon([0,5],polygon),true);});
+test('Observed intersection uses geometry and does not use a damage label',()=>{const before=assessObservedExtent(assets,extent);const changed=assets.map(a=>({...a,damage_gra:'Destroyed',score:99999}));assert.deepEqual(assessObservedExtent(changed,extent).map(a=>[a.id,a.band,a.score]),before.map(a=>[a.id,a.band,a.score]));assert.equal(summarize(before).total,438);});
+test('A source observed before the event but published later is withheld',()=>{const pre=evidenceAsOf('2026-08-25T23:59:59Z');assert.equal(pre.find(e=>e.id==='icimod').available,false);assert.equal(pre.find(e=>e.id==='cems-aoi01').available,false);assert.equal(assessHypotheses('2026-08-25T23:59:59Z')[0].support.length,0);assert.equal(evidenceAsOf('2026-10-14T00:00:00Z').find(e=>e.id==='icimod').available,true);});
+test('Unknown publication time is conservatively gated by retrieval cutoff',()=>{assert.equal(evidenceAsOf('2026-09-01T00:00:00Z').find(e=>e.id==='cems-aoi01').available,false);assert.equal(evidenceAsOf('2026-11-14T23:59:59Z').find(e=>e.id==='cems-aoi01').available,true);});
+test('Grid validation rejects dimension mismatches and unsafe coordinates',()=>{assert.throws(()=>validateGrid({...grid,elevation:[1]}));assert.throws(()=>validateGrid({...grid,bbox:[2,2,1,1]}));});
+test('Import requires valid, unique WGS84 point assets',()=>{const f={type:'FeatureCollection',features:[{type:'Feature',geometry:{type:'Point',coordinates:[85,28]},properties:{id:'a'}}]};assert.equal(validateImportedAssets(f)[0].id,'a');assert.throws(()=>validateImportedAssets({...f,features:[...f.features,...f.features]}));assert.throws(()=>validateImportedAssets({type:'FeatureCollection',features:[{geometry:{type:'Point',coordinates:[300,100]}}]}));});
+test('Assets outside the actual terrain window stay unassessed',()=>{const [a]=screenAssets([{id:'far',coordinates:[-112,36]}],drainage);assert.equal(a.band,'unknown');assert.equal(a.score,null);});
+test('Data files match manifest checksums',async()=>{for(const [name,record] of Object.entries(manifest.files)){const b=await readFile(new URL('../public/data/'+name,import.meta.url));assert.equal(createHash('sha256').update(b).digest('hex'),record.sha256,name);}});
+test('Exports explicitly prohibit probabilistic and structural interpretations',()=>{const report=makeReport({results:[],parameters:{stage:10},mode:'terrain',asOf:'2026-11-14',manifest});assert.equal(report.claims.forecast,false);assert.equal(report.claims.waterDepth,false);assert.equal(report.claims.structuralForce,false);assert.equal(report.claims.calibratedProbability,false);});
+
+test('Historical context withholds post-event map overlays and source points at an early cutoff',()=>{
+ assert.deepEqual(contextAsOf('2026-08-25T23:59:59Z'),{assessment:false,sourcePoint:false,terrain:false});
+ const september=contextAsOf('2026-09-01T00:00:00Z');assert.equal(september.sourcePoint,true);assert.equal(september.assessment,false);
+ assert.equal(contextAsOf('2026-11-14T23:59:59Z').assessment,true);
+});
+test('Local cause explanations use only interpretations available under the cutoff',()=>{
+ const before=interpretationAsOf('2026-08-25T23:59:59Z');assert.match(before.mechanism,/No Rasuwa cause assessment/);assert.equal(before.sources.length,0);assert.doesNotMatch(before.mechanism,/leading retrospective|deformation finding/);assert.doesNotMatch(before.warning,/October 13/);
+ const early=interpretationAsOf('2026-09-01T00:00:00Z');assert.match(early.mechanism,/rock–ice/);assert.doesNotMatch(early.mechanism,/deformation finding|pixel-offset/);assert.deepEqual(early.sources.map(e=>e.id),['hirisk']);
+ const full=interpretationAsOf('2026-11-14T23:59:59Z');assert.match(full.mechanism,/method-dependent/);assert.match(full.warning,/October 13/);
+});

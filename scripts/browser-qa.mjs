@@ -1,0 +1,32 @@
+import {chromium} from 'playwright';
+import {mkdir,writeFile} from 'node:fs/promises';
+await mkdir('outputs',{recursive:true});
+const browser=await chromium.launch({headless:true});const page=await browser.newPage({viewport:{width:1440,height:1100},deviceScaleFactor:1});const errors=[];page.on('pageerror',e=>errors.push(e.message));
+await page.route('**/api/operations',r=>r.fulfill({status:200,body:JSON.stringify({state:null,persistence:'browser'}),contentType:'application/json'}));
+// Browser QA always uses key-free mode, even if the operator has real credentials.
+await page.route('**/api/config',r=>r.fulfill({status:200,body:JSON.stringify({agentAvailable:false,provider:'AWS Bedrock',voice:{configured:false}}),contentType:'application/json'}));
+await page.goto('http://127.0.0.1:4173',{waitUntil:'networkidle'});await page.waitForSelector('#map-loading[hidden]',{state:'attached'});
+await page.waitForFunction(()=>document.querySelector('#page-title').textContent.includes('See the terrain'));await page.locator('[data-view="exposure"]').click();
+const initial=await page.locator('#stat-total').textContent();if(initial!=='438')throw new Error('Incorrect source asset count: '+initial);
+await page.screenshot({path:'outputs/headwater-desktop.png',fullPage:true});
+await page.locator('#stage').fill('20');await page.locator('#run-analysis').click();await page.waitForFunction(()=>document.querySelector('#run-status').textContent.includes('Calculated'));
+const high=await page.locator('#stat-high').textContent();if(high!=='101')throw new Error('Scenario did not recompute: '+high);
+await page.locator('.asset-row').first().click();await page.waitForSelector('#detail-dialog[open]');await page.locator('#detail-dialog .dialog-close').click();
+await page.locator('#analysis-mode').selectOption('observed');await page.waitForFunction(()=>document.querySelector('#map-mode-badge').textContent==='OBSERVED FOOTPRINT');
+await page.locator('#cutoff').selectOption('2026-08-25T23:59:59Z');await page.waitForFunction(()=>document.querySelector('#stat-total').textContent==='0');
+await page.locator('[data-view="command"]').click();await page.waitForFunction(()=>document.querySelector('#command-map').dataset.assessmentAvailable==='false');if(!(await page.locator('#command-cutoff-note').isVisible()))throw new Error('Command map did not explain withheld assessment layers');if(!(await page.locator('#map-overview').isDisabled()))throw new Error('Unpublished source point remained accessible');
+await page.locator('[data-view="investigation"]').click();await page.locator('[data-prompt]').first().click();await page.waitForSelector('.message.agent');if(!(await page.locator('.message.agent').last().textContent()).includes('No Rasuwa cause assessment'))throw new Error('Local explanation leaked a later cause interpretation');
+await page.locator('[data-view="exposure"]').click();await page.locator('#cutoff').selectOption('2026-11-14T23:59:59Z');await page.waitForFunction(()=>document.querySelector('#stat-total').textContent==='438');
+await page.locator('[data-view="command"]').click();await page.locator('#command-stage').fill('20');await page.locator('#command-stage-run').click();await page.waitForFunction(()=>document.querySelector('#analysis-mode').value==='terrain'&&document.querySelector('#stat-high').textContent==='101');
+await page.locator('[data-view="evidence"]').click();if(await page.locator('.evidence-item').count()<4)throw new Error('Missing evidence register');
+await page.locator('[data-view="satellite"]').click();if(await page.locator('.scene-card').count()!==24)throw new Error('Missing satellite catalogue');
+await page.locator('[data-view="investigation"]').click();await page.locator('[data-prompt]').nth(1).click();await page.waitForSelector('.message.agent');const answer=await page.locator('.message.agent').last().textContent();if(!answer.includes('101'))throw new Error('Local workflow did not use analytical results');
+await page.locator('[data-view="exposure"]').click();const dl=page.waitForEvent('download');await page.locator('#export-button').click();const download=await dl;await download.saveAs('outputs/browser-export.json');
+await page.locator('#demo-button').click();await page.waitForFunction(()=>document.querySelector('#view-command').classList.contains('active')&&document.querySelector('#stat-high').textContent==='54');
+await page.keyboard.press('n');await page.waitForFunction(()=>document.querySelector('#stat-high').textContent==='101');
+for(const view of ['rescue','communications','evidence','investigation']){await page.keyboard.press('n');await page.waitForFunction(view=>document.querySelector('#view-'+view).classList.contains('active'),view);}
+await page.keyboard.press('p');if(!(await page.locator('body').evaluate(e=>e.classList.contains('presentation'))))throw new Error('Presentation shortcut failed');await page.keyboard.press('p');await page.keyboard.press('Escape');if(await page.locator('body').evaluate(e=>e.classList.contains('demo-mode')))throw new Error('Guided demo did not exit');
+await page.locator('[data-view="exposure"]').click();
+await page.setViewportSize({width:390,height:844});await page.waitForTimeout(400);await page.screenshot({path:'outputs/headwater-mobile.png',fullPage:true});const overflow=await page.evaluate(()=>document.documentElement.scrollWidth>window.innerWidth);if(overflow)throw new Error('Mobile viewport overflows horizontally');
+await writeFile('outputs/browser-qa.json',JSON.stringify({passed:true,errors,initialAssets:Number(initial),scenarioHigh:Number(high),satelliteScenes:24,checks:['asset-selection','scenario-recompute','observed-mode','publication-cutoff','3D-layer-cutoff','local-explanation-cutoff','evidence-register','catalogue','local-workflow','export','six-step-guided-demo','presentation-shortcut','responsive-layout']},null,2));
+await browser.close();if(errors.length)throw new Error(errors.join('\n'));console.log('Browser QA passed.');
