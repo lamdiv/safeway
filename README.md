@@ -6,6 +6,12 @@ Headwater is a geospatial disaster-intelligence and response exercise workspace:
 
 This repository is a working **research screening prototype**, not an operational early-warning system. The implemented numerical method is relative-terrain screening; it is not a hydrodynamic or multiphase mass-flow solver.
 
+## Start here
+
+The default screen is now a full-screen incident map. Click **Run flood scenario**, review **calls + texts**, confirm the exercise destination, and simulate the alerts. People and rescue teams move on real mapped routes. Crossing access-check requests appear at the same time as household warnings. **Report crossing closed** halts movement for review.
+
+The timeline scrubs an authored exercise, not a physical flood forecast. **Evidence** opens the detailed research workspace. Actual Photon SMS and SIP/ElevenLabs calls are a separate opt-in test action requiring configured providers, household contacts, an allowlist and operator approval. Playback never sends real communications.
+
 ## Run
 
 Node.js 22.13 or newer:

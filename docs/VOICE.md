@@ -21,3 +21,9 @@ The voice agent should confirm the location, number of people and assistance req
 ## Submission distinction
 
 A configurable adapter is not a verified sponsor integration. Claim the Photon track only after a real configured Photon SIP test call has been demonstrated and the sponsor's detailed guidelines reviewed.
+
+## Personalized SMS and voice drill alerts
+
+The main map prepares a destination and real mapped-route description for each exercise household. Playback simulates the text/call sequence only. For a real opt-in test, set PHOTON_API_KEY, PHOTON_PROJECT_ID and PHOTON_AGENT_USER_ID for the SMS identity, plus the voice configuration above. Set HEADWATER_ALERT_CONTACTS to a JSON mapping such as {"HH-01":"+15555550123"}, and include every test number in HEADWATER_TEST_RECIPIENTS. The interface reveals the real-test controls only when providers and contacts are configured. Type SEND TEST ALERTS and confirm the route to invoke them. The ElevenLabs agent prompt must use the `evacuation_message` dynamic variable; its use is not established merely by provider acceptance.
+
+Text transport follows Photon’s documented Users → Spaces → Messages API: https://photon.codes/blog/introducing-photon-2.0 . No real messages were sent in implementation. Verified inbound SMS acknowledgements and operational shelter approvals are not implemented. Optional HEADWATER_PUBLIC_BASE_URL is reserved for a publicly reachable route page; leave it blank in the local-only demo.

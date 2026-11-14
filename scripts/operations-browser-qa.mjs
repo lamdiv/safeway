@@ -6,7 +6,7 @@ const page=await browser.newPage({viewport:{width:1600,height:1150},deviceScaleF
 await page.route('**/api/operations',r=>r.fulfill({status:200,body:JSON.stringify({state:null,persistence:'browser'}),contentType:'application/json'}));
 // Browser QA always uses key-free mode, even if the operator has real credentials.
 await page.route('**/api/config',r=>r.fulfill({status:200,body:JSON.stringify({agentAvailable:false,provider:'AWS Bedrock',voice:{configured:false}}),contentType:'application/json'}));
-await page.goto('http://127.0.0.1:4173',{waitUntil:'networkidle'});
+await page.goto('http://127.0.0.1:4173/research.html',{waitUntil:'networkidle'});
 await page.waitForFunction(()=>document.querySelector('#page-title').textContent.includes('See the terrain'));
 await page.waitForSelector('#command-map[data-ready="true"]',{state:'attached',timeout:30000});await page.waitForTimeout(1500);
 if(await page.locator('#command-map-fallback').isVisible())throw new Error('3D map fell back');

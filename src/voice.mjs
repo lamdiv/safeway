@@ -6,7 +6,7 @@ export function validateTestCall(input,env=process.env){
  const allowed=(env.HEADWATER_TEST_RECIPIENTS||'').split(',').map(x=>x.trim()).filter(Boolean);if(!allowed.includes(input.to))throw new Error('Recipient is not on the server test-contact allowlist.');
  if(!voiceConfiguration(env).configured)throw new Error('Photon SIP / ElevenLabs voice is not configured. No call has been made.');
  if(typeof input.requestId!=='string'||input.requestId.length>100)throw new Error('A request ID is required.');
- return {agent_id:env.HEADWATER_VOICE_AGENT_ID,agent_phone_number_id:env.HEADWATER_VOICE_PHONE_ID,to_number:input.to,conversation_initiation_client_data:{dynamic_variables:{incident_name:'Headwater exercise — no actual emergency dispatch',case_id:input.requestId,exercise_notice:'This is an opt-in test exercise. Do not issue real evacuation or medical instructions.'}}};
+ return {agent_id:env.HEADWATER_VOICE_AGENT_ID,agent_phone_number_id:env.HEADWATER_VOICE_PHONE_ID,to_number:input.to,conversation_initiation_client_data:{dynamic_variables:{incident_name:'Headwater exercise — no actual emergency dispatch',case_id:input.requestId,exercise_notice:'This is an opt-in test exercise. Do not issue real evacuation or medical instructions.',evacuation_message:String(input.evacuationMessage||'').slice(0,1500)}}};
 }
 export async function initiateTestCall(input,{env=process.env,fetchImpl=fetch}={}){
  const payload=validateTestCall(input,env);

@@ -3,6 +3,8 @@ import {readFile,stat} from 'node:fs/promises';
 import {resolve,extname,sep} from 'node:path';
 import {fileURLToPath} from 'node:url';
 import {createHash} from 'node:crypto';
+import {createIncidentPlan} from './src/simulation.mjs';
+import {alertConfiguration,createAlertDispatcher} from './src/notifications.mjs';
 import {modelConfiguration} from './src/models.mjs';
 import {operationsStore} from './src/operations-store.mjs';
 import {voiceConfiguration,initiateTestCall} from './src/voice.mjs';
@@ -10,6 +12,7 @@ const ROOT=fileURLToPath(new URL('.',import.meta.url));
 const PUBLIC=resolve(ROOT,'public');
 const PORT=Number(process.env.PORT||4173);
 const MIME={'.html':'text/html; charset=utf-8','.css':'text/css','.js':'application/javascript','.mjs':'application/javascript','.json':'application/json','.geojson':'application/geo+json','.png':'image/png','.svg':'image/svg+xml','.ico':'image/x-icon'};
+const alertDispatcher=createAlertDispatcher();
 let busy=false;let opsStorePromise;
 async function getOpsStore(){if(!opsStorePromise)opsStorePromise=Promise.all(['assets.json','roads.geojson'].map(name=>readFile(resolve(PUBLIC,'data',name),'utf8').then(JSON.parse))).then(([assets,roads])=>operationsStore({path:resolve(ROOT,'data/runtime/operations.json'),assets,roads}));return opsStorePromise;}
 function authorized(req){if(req.headers.origin&&new URL(req.headers.origin).host!==req.headers.host)return false;return !process.env.HEADWATER_API_TOKEN||req.headers.authorization===`Bearer ${process.env.HEADWATER_API_TOKEN}`;}
@@ -20,7 +23,12 @@ export const server=http.createServer(async(req,res)=>{
  try{
   const path=new URL(req.url,'http://localhost').pathname;
   res.setHeader('X-Content-Type-Options','nosniff');res.setHeader('Referrer-Policy','strict-origin-when-cross-origin');
-  if(path==='/api/config'){const c=modelConfiguration();return json(res,200,{...c,provider:c.providerLabel,agentAvailable:c.configured,voice:voiceConfiguration(),authorizationRequired:Boolean(process.env.HEADWATER_API_TOKEN),mode:c.configured?`live-${c.provider}-deepagent`:'not-configured'});}
+  if(path==='/api/config'){const c=modelConfiguration();return json(res,200,{...c,provider:c.providerLabel,agentAvailable:c.configured,voice:voiceConfiguration(),alerts:alertConfiguration(),authorizationRequired:Boolean(process.env.HEADWATER_API_TOKEN),mode:c.configured?`live-${c.provider}-deepagent`:'not-configured'});}
+  if(path==='/api/incident/alerts'){
+   if(req.method!=='POST')return json(res,405,{error:'POST required'});
+   if(!authorized(req))return json(res,403,{error:'Authorization or same-origin check failed.'});
+   try{const input=await body(req);const [grid,assets,roads]=await Promise.all(['terrain.json','assets.json','roads.geojson'].map(load));const plan=createIncidentPlan({grid,assets,roads},{stage:20,incidentId:String(input.incidentId||'RASUWA-EXERCISE').slice(0,100)});const records=await alertDispatcher.dispatch(plan,input);return json(res,200,{records,acknowledged:false,notice:'Provider acceptance does not establish delivery or a recipient acknowledgement.'});}catch(e){return json(res,400,{error:e.message});}
+  }
   if(path==='/api/operations'){
    if(!authorized(req))return json(res,403,{error:'Authorization or same-origin check failed.'});
    const store=await getOpsStore();

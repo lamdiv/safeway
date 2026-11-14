@@ -5,7 +5,7 @@ const browser=await chromium.launch({headless:true});const page=await browser.ne
 await page.route('**/api/operations',r=>r.fulfill({status:200,body:JSON.stringify({state:null,persistence:'browser'}),contentType:'application/json'}));
 // Browser QA always uses key-free mode, even if the operator has real credentials.
 await page.route('**/api/config',r=>r.fulfill({status:200,body:JSON.stringify({agentAvailable:false,provider:'AWS Bedrock',voice:{configured:false}}),contentType:'application/json'}));
-await page.goto('http://127.0.0.1:4173',{waitUntil:'networkidle'});await page.waitForSelector('#map-loading[hidden]',{state:'attached'});
+await page.goto('http://127.0.0.1:4173/research.html',{waitUntil:'networkidle'});await page.waitForSelector('#map-loading[hidden]',{state:'attached'});
 await page.waitForFunction(()=>document.querySelector('#page-title').textContent.includes('See the terrain'));await page.locator('[data-view="exposure"]').click();
 const initial=await page.locator('#stat-total').textContent();if(initial!=='438')throw new Error('Incorrect source asset count: '+initial);
 await page.screenshot({path:'outputs/headwater-desktop.png',fullPage:true});
