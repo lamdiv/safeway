@@ -33,3 +33,9 @@ export function clientHazard(id,time){return hazardAt(id,time);}
 export function clientWarning(id,time){const s=scenarios[id];if(s.raster)return time>=0?rasterState(s,time+s.warn.lead):{...fc([]),raster:true,frame:-1,thresholdFt:null};return warningAt(id,time);}
 function rasterState(s,time){const t=thresholdAt(s.raster.thresholdsFt,time);return {...fc([]),raster:true,frame:frameAt(s.flood,time),thresholdFt:t===Infinity?null:+t.toFixed(3)};}
 export function clientZones(id){return zonesAt(id);}
+
+// A green demonstration resident sits outside the modeled reach, rather than relabelling flooded ground green.
+for(const scenario of Object.values(scenarios)){
+ const green=scenario.people[2];green.start=scenario.id==='rasuwa'?[green.destination.coordinates[0]-.006,green.destination.coordinates[1]+.002]:[...green.destination.coordinates];green.route=[[...green.start],[...green.start]];
+ for(const p of scenario.people)p.refuge={id:p.id+'-refuge',name:p.name.split(' ')[0]+'’s upper-floor refuge',coordinates:[...p.start],definedForDemo:true,realWorldVerified:false,approvedForDemo:true,floorAboveGroundM:12,maxModeledDepthM:8};
+}

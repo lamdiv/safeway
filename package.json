@@ -11,8 +11,10 @@
     "start": "node --env-file-if-exists=.env scripts/run-demo.mjs",
     "test:safeway": "node --test tests/safeway.test.mjs",
     "qa:safeway": "node scripts/safeway-browser-qa.mjs",
-    "qa:response": "node scripts/response-browser-qa.mjs",
-    "qa:calls": "node scripts/call-reliability-qa.mjs"
+    "qa:response": "node scripts/flood-response-qa.mjs",
+    "qa:calls": "node scripts/call-reliability-qa.mjs",
+    "qa:flood": "node scripts/flood-response-qa.mjs",
+    "qa:surface": "node scripts/flood-surface-qa.mjs"
   },
   "dependencies": {
     "@langchain/aws": "^1.5.2",

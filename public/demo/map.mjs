@@ -1,3 +1,4 @@
+import {WaterSurface,sceneTime,waterThreshold} from './water-surface.mjs';
 import * as maplibre from '/vendor/maplibre-gl.mjs';import {labels} from './common.mjs';
 const fc=features=>({type:'FeatureCollection',features}),empty=()=>fc([]);
 const mercX=lng=>lng*20037508.34/180,mercY=lat=>Math.log(Math.tan((90+lat)*Math.PI/360))*6378137;
@@ -23,7 +24,7 @@ const AFTER_START=['zone-fill','zone-edge','flood-zones','flow-line','flow-arrow
 
 export class ResponseMap{
  constructor(container,{compact=false}={}){
-  this.container=container;this.markers=new Map();this.destinations=new Map();this.compact=compact;this.hidden=new Map();
+  this.container=container;this.markers=new Map();this.destinations=new Map();this.compact=compact;this.view=compact?'street':'3d';this.moves=new Map();this.hidden=new Map();
   this.map=new maplibre.Map({container,style:'https://tiles.openfreemap.org/styles/liberty',center:[85.340,28.171],zoom:13.8,pitch:compact?0:57,bearing:compact?0:-18,canvasContextAttributes:{antialias:true},attributionControl:{compact:true}});
   this.map.addControl(new maplibre.NavigationControl({visualizePitch:true}),'top-right');
   this.floodControl=new FloodMapControl(()=>this.setFloodMap(!this.floodMode));this.map.addControl(this.floodControl,'top-right');
@@ -35,13 +36,14 @@ export class ResponseMap{
    const label=this.label=this.map.getStyle().layers.find(l=>l.type==='symbol')?.id;
    if(!compact)this.map.addLayer({id:'buildings-3d',type:'fill-extrusion',source:'openmaptiles','source-layer':'building',minzoom:13,paint:{'fill-extrusion-color':'#98a6a7','fill-extrusion-height':['max',5,['to-number',['get','render_height'],5]],'fill-extrusion-opacity':.86}},label);
    for(const id of ['hazard','warning','routes','zones','arrows'])this.map.addSource(id,{type:'geojson',data:empty()});
-   const zoneColor=['match',['get','zone'],'high','#d9483b','medium','#ee9a35','#e8c547'];
+   const zoneColor=['match',['get','zone'],'red','#df5149','yellow','#e6b544','#3ba684'];
    this.map.addLayer({id:'zone-fill',type:'fill',source:'zones',layout:{visibility:'none'},paint:{'fill-color':zoneColor,'fill-opacity':['match',['get','zone'],'high',.2,'medium',.15,.12]}},label);
    this.map.addLayer({id:'zone-edge',type:'line',source:'zones',layout:{visibility:'none'},paint:{'line-color':zoneColor,'line-width':1.2,'line-opacity':.75}},label);
    this.map.addLayer({id:'warning-zone',type:'line',source:'warning',paint:{'line-color':'#c4845b','line-width':1.5,'line-dasharray':[4,3],'line-opacity':.85}},label);
    this.map.addLayer({id:'hazard-fill',type:'fill',source:'hazard',paint:{'fill-color':'#47b9e4','fill-opacity':.48,'fill-antialias':true}},label);
    this.map.addLayer({id:'hazard-edge',type:'line',source:'hazard',layout:{'line-join':'round','line-cap':'round'},paint:{'line-color':'#77dcf4','line-width':2,'line-opacity':.95}},label);
-   if(!compact){this.map.addSource('water3d',{type:'geojson',data:empty()});this.map.addLayer({id:'water-3d',type:'fill-extrusion',source:'water3d',layout:{visibility:'none'},filter:['>=',['get','d'],999],paint:{'fill-extrusion-color':'#4799d3','fill-extrusion-height':0,'fill-extrusion-base':0,'fill-extrusion-opacity':.84,'fill-extrusion-vertical-gradient':false}},label);}
+   this.waterLayer=new WaterSurface();this.map.addLayer(this.waterLayer,label);
+   for(const [id,source]of [['valley-relief','valley-dem'],['houston-relief','houston-dem']])this.map.addLayer({id,type:'hillshade',source,layout:{visibility:'none'},paint:{'hillshade-exaggeration':.65,'hillshade-shadow-color':'#5f6c63','hillshade-highlight-color':'#fff8df'}},label);
    this.map.addLayer({id:'flow-line',type:'line',source:'arrows',layout:{visibility:'none'},paint:{'line-color':'#0f5f8f','line-width':1.5,'line-opacity':.7,'line-dasharray':[2,2]}});
    this.map.addLayer({id:'flow-arrows',type:'symbol',source:'arrows',layout:{visibility:'none','symbol-placement':'line','symbol-spacing':90,'text-field':'›','text-font':['Noto Sans Bold'],'text-size':26,'text-keep-upright':false,'text-allow-overlap':true,'text-rotation-alignment':'map','text-offset':[0,-.12]},paint:{'text-color':'#0f5f8f','text-halo-color':'#ffffff','text-halo-width':1.5}});
    this.map.addLayer({id:'route-shadow',type:'line',source:'routes',layout:{'line-join':'round','line-cap':'round'},paint:{'line-color':'#fff','line-width':6,'line-opacity':.85}});
@@ -53,82 +55,52 @@ export class ResponseMap{
  /** Show or hide a layer. While the depth map is open, remember the wish and apply it on close. */
  setVisible(id,on){if(!this.map.getLayer(id))return;const v=on?'visible':'none';if(this.floodMode){this.hidden.set(id,v);return;}if(this.map.getLayoutProperty(id,'visibility')!==v)this.map.setLayoutProperty(id,'visibility',v);}
 
- /** Gridded flood (Houston): the affected-zones image and the 3D water built from the depth grid. */
- rasterLayers(r){
-  const source=this.map.getSource('flood-zones');
-  if(source)source.updateImage({url:r.url+'zones.png',coordinates:r.bounds});
-  else{this.map.addSource('flood-zones',{type:'image',url:r.url+'zones.png',coordinates:r.bounds});this.map.addLayer({id:'flood-zones',type:'raster',source:'flood-zones',layout:{visibility:'none'},paint:{'raster-opacity':.2,'raster-resampling':'linear','raster-fade-duration':0}},this.map.getLayer('water-3d')?'water-3d':this.label);}
-  if(!this.compact)this.buildWater(r);
+ /** Zone colors are separate from the continuous blue water surface. */
+ async rasterLayers(r){
+  const key=this.zoneKey=r.key,cells=new Uint8Array(await fetch(r.url+'depth.bin').then(x=>x.arrayBuffer()));if(this.zoneKey!==key)return;
+  this.zoneCells=cells;this.zoneMeta=r;this.zoneCanvas??=document.createElement('canvas');this.zoneCanvas.width=256;this.zoneCanvas.height=Math.max(2,Math.round(256*r.size[1]/r.size[0]));
+  if(this.map.getSource('flood-zones'))this.map.getSource('flood-zones').setCoordinates(r.bounds);
+  else{this.map.addSource('flood-zones',{type:'canvas',canvas:this.zoneCanvas,coordinates:r.bounds,animate:true});this.map.addLayer({id:'flood-zones',type:'raster',source:'flood-zones',layout:{visibility:'none'},paint:{'raster-opacity':.22,'raster-resampling':'linear','raster-fade-duration':0}},this.label);}
+  this.paintZones();
  }
-
- /** Turn the depth grid into 30 m water columns. Each column keeps the mean depth of its flooded cells. */
- async buildWater(r){
-  const token=this.waterToken=r.key;this.map.getSource('water3d')?.setData(empty());
-  const cells=new Uint8Array(await fetch(r.url+'depth.bin').then(x=>x.arrayBuffer()));if(this.waterToken!==token)return;
-  const [w,h]=r.size,B=WATER_BLOCK,X0=mercX(r.bounds[0][0]),Y1=mercY(r.bounds[0][1]),X1=mercX(r.bounds[2][0]),Y0=mercY(r.bounds[2][1]),dx=(X1-X0)/w,dy=(Y1-Y0)/h,features=[];
-  for(let by=0;by<h;by+=B)for(let bx=0;bx<w;bx+=B){
-   let n=0,sum=0;for(let y=by;y<Math.min(h,by+B);y++)for(let x=bx;x<Math.min(w,bx+B);x++){const v=cells[y*w+x];if(v){n++;sum+=v-1;}}
-   if(n*2<B*B)continue;
-   const xa=X0+bx*dx,xb=X0+Math.min(w,bx+B)*dx,ya=Y1-by*dy,yb=Y1-Math.min(h,by+B)*dy;
-   features.push({type:'Feature',properties:{d:Math.round(sum/n)/10},geometry:{type:'Polygon',coordinates:[[unmerc(xa,ya),unmerc(xb,ya),unmerc(xb,yb),unmerc(xa,yb),unmerc(xa,ya)]]}});
-  }
-  this.map.getSource('water3d')?.setData(fc(features));this.waterReady=r.key;this.lastT=null;
+ paintZones(){if(!this.zoneCanvas||!this.zoneCells||!this.state||this.zoneMeta.key!==this.state.scenario.raster?.key)return;const r=this.zoneMeta,[w,h]=r.size,c=this.zoneCanvas,context=c.getContext('2d'),image=context.createImageData(c.width,c.height),threshold=waterThreshold(r,(this.state.modelTime??this.state.elapsed)+(this.state.speed||1)*18);
+  for(let y=0;y<c.height;y++)for(let x=0;x<c.width;x++){const value=this.zoneCells[Math.min(h-1,Math.floor(y/c.height*h))*w+Math.min(w-1,Math.floor(x/c.width*w))],depth=value?(value-1)/10:null,color=depth===null?[59,166,132]:depth>3||depth>=threshold?[223,81,73]:[230,181,68],i=(y*c.width+x)*4;image.data.set([...color,190],i);}
+  context.putImageData(image,0,0);const source=this.map.getSource('flood-zones');if(this.state.mode==='running')source?.play();else source?.pause();this.map.triggerRepaint();
  }
-
- /** Smooth flood animation: estimate the simulation clock between server updates and redraw the water. */
- animate(){
-  if(this.animating)return;this.animating=true;
-  const frame=()=>{
-   const st=this.state,s=st?.scenario,r=s?.raster,live=r&&!this.compact&&this.loaded&&st.mode!=='ready'&&this.waterReady===r.key;
-   if(live){
-    const now=performance.now(),est=Math.min(s.duration,st.elapsed+(st.mode==='running'?(now-this.clockAt)/1000:0));
-    this.estElapsed=Math.max(this.estElapsed??0,est);
-    const T=thresholdAt(r,this.estElapsed);
-    if(T!==Infinity&&(this.lastT===null||Math.abs(T-this.lastT)>.01)&&now-(this.paintedAt??0)>40){
-     const water=['-',['get','d'],T];
-     this.map.setPaintProperty('water-3d','fill-extrusion-height',['*',.3048*HOUSTON_EXAGGERATION,['max',0,water]]);
-     this.map.setPaintProperty('water-3d','fill-extrusion-color',['step',water,...DEPTH_COLORS]);
-     if(this.filterT===undefined||Math.abs(T-this.filterT)>.15){this.map.setFilter('water-3d',['>=',['get','d'],T]);this.filterT=T;}
-     this.lastT=T;this.paintedAt=now;
-    }
-   }
-   this.setVisible('water-3d',!!live&&this.lastT!==null);
-   requestAnimationFrame(frame);
-  };
-  requestAnimationFrame(frame);
- }
+ animate(){if(this.animating)return;this.animating=true;const frame=()=>{const now=performance.now();for(const [id,move]of this.moves){const marker=this.markers.get(id);if(!marker){this.moves.delete(id);continue;}const t=Math.min(1,(now-move.at)/250),e=t*t*(3-2*t);marker.setLngLat(move.from.map((v,i)=>v+(move.to[i]-v)*e));if(t===1)this.moves.delete(id);}requestAnimationFrame(frame);};requestAnimationFrame(frame);}
+ setView(view){if(!['street','terrain','3d'].includes(view))return;this.view=view;if(!this.loaded)return;this.applyTerrain(this.state?.scenario);this.setVisible('buildings-3d',view==='3d'&&!this.compact);this.setVisible('valley-relief',view==='terrain'&&this.scenario==='rasuwa');this.setVisible('houston-relief',view==='terrain'&&this.scenario?.startsWith('houston'));this.map.easeTo({pitch:view==='street'?0:58,bearing:view==='street'?0:-18,duration:650});this.waterLayer?.refresh();document.getElementById(this.container).dataset.view=view;}
 
  applyTerrain(s){
-  if(this.compact||this.floodMode||!s){this.map.setTerrain(null);return;}
+  if(this.compact||this.view==='street'||this.floodMode||!s){this.map.setTerrain(null);return;}
   this.map.setTerrain(s.id==='rasuwa'?{source:'valley-dem',exaggeration:1}:s.raster?{source:'houston-dem',exaggeration:HOUSTON_EXAGGERATION}:null);
  }
 
  update(state,{people=state.people||[],routes=true}={}){
   const prev=this.state;this.state=state;this.clockAt=performance.now();if(!prev||state.elapsed<prev.elapsed-.5||state.mode==='ready'||prev.scenario?.id!==state.scenario?.id){this.estElapsed=state.elapsed;this.lastT=null;this.filterT=undefined;}
-  if(!this.loaded)return;this.animate();const s=state.scenario,started=state.mode&&state.mode!=='ready';
+  if(!this.loaded)return;this.animate();this.waterLayer?.setState(state,this.clockAt);if(this.waterLayer)this.waterLayer.enabled=!this.floodMode;const s=state.scenario,started=state.mode&&state.mode!=='ready';
   if(this.scenario!==s.id){
-   this.scenario=s.id;this.applyTerrain(s);
-   if(!this.floodMode)this.map.flyTo({center:s.center,zoom:this.compact?s.zoom+.4:s.zoom,pitch:this.compact?0:s.pitch,bearing:this.compact?0:s.bearing,duration:600});
+   this.scenario=s.id;this.applyTerrain(s);this.waterLayer.setScenario(s).catch(error=>{document.getElementById(this.container).dataset.waterError=error.message;});
+   if(!this.floodMode)this.map.flyTo({center:s.center,zoom:this.compact?s.zoom+.4:s.zoom,pitch:this.compact||this.view==='street'?0:s.pitch,bearing:this.compact?0:s.bearing,duration:600});
    for(const m of this.destinations.values())m.remove();this.destinations.clear();
-   const z=state.zones||{};this.map.getSource('zones').setData(fc(['low','medium','high'].flatMap(k=>(z[k]?.features||[]).map(f=>({...f,properties:{zone:k}})))));
+   const z=state.zones||{},features=[];for(const f of z.medium?.features||[]){const hole=z.high?.features[0]?.geometry.coordinates[0];features.push({...f,properties:{zone:'yellow'},geometry:{type:'Polygon',coordinates:[f.geometry.coordinates[0],...(hole?[[...hole].reverse()]:[])]}});}features.push(...(z.high?.features||[]).map(f=>({...f,properties:{zone:'red'}})));for(const p of people.filter(p=>p.zone==='green')){const ring=Array.from({length:65},(_,i)=>{const a=i/64*Math.PI*2;return [p.start[0]+Math.cos(a)*150/(111195*Math.cos(p.start[1]*Math.PI/180)),p.start[1]+Math.sin(a)*150/111195];});features.push({type:'Feature',properties:{zone:'green'},geometry:{type:'Polygon',coordinates:[ring]}});}this.map.getSource('zones').setData(fc(features));
    this.map.getSource('arrows').setData(s.arrows||empty());
-   if(s.raster)this.rasterLayers(s.raster);
+   if(s.raster)this.rasterLayers(s.raster).catch(()=>{});
    if(this.floodControl.el)this.floodControl.el.hidden=!s.id.startsWith('houston');
    if(this.floodMode&&!s.id.startsWith('houston'))this.setFloodMap(false);
   }
   for(const id of AFTER_START)this.setVisible(id,started&&(id.startsWith('flood')?!!s.raster:!s.raster));
-  this.map.getSource('hazard').setData(s.raster?empty():state.hazard||empty());this.map.getSource('warning').setData(s.raster?empty():state.warning||empty());
-  const paths=[];
+  this.map.getSource('hazard').setData(empty());this.map.getSource('warning').setData(s.raster?empty():state.warning||empty());
+  if(s.raster)this.paintZones();const paths=[],activeDestinations=new Set();
   for(const p of people){
-   if(routes&&(p.atRisk||p.acknowledged||p.call)&&p.route?.length>1)paths.push({type:'Feature',geometry:{type:'LineString',coordinates:p.route},properties:{}});
+   if(routes&&p.guidance?.action==='evacuate'&&p.route?.length>1)paths.push({type:'Feature',geometry:{type:'LineString',coordinates:p.route},properties:{}});
    let marker=this.markers.get(p.id);
-   if(!marker){const el=document.createElement('div');el.className='person-marker';el.title=p.name;const i=document.createElement('span');i.textContent=p.name.split(' ').map(n=>n[0]).join('');const tag=document.createElement('span');tag.className='person-tag';el.append(i,tag);marker=new maplibre.Marker({element:el}).setLngLat(p.position).addTo(this.map);this.markers.set(p.id,marker);}
-   marker.setLngLat(p.position);const el=marker.getElement();el.className='person-marker'+(p.atRisk?' risk':'')+(p.acknowledged||p.arrived?' moving':'')+(started&&!this.compact?' tagged':'');
+   if(!marker){const el=document.createElement('div');el.className='person-marker';el.title=p.name;const i=document.createElement('span');i.textContent=p.name.split(' ').map(n=>n[0]).join('');const tag=document.createElement('span');tag.className='person-tag';el.append(i,tag);marker=new maplibre.Marker({element:el,subpixelPositioning:true}).setLngLat(p.position).addTo(this.map);this.markers.set(p.id,marker);}
+   const current=marker.getLngLat().toArray();if(Math.hypot(current[0]-p.position[0],current[1]-p.position[1])>1e-9)this.moves.set(p.id,{from:current,to:p.position,at:performance.now()});const el=marker.getElement();el.className='person-marker'+(p.atRisk?' risk':'')+(p.acknowledged||p.arrived?' moving':'')+(started&&!this.compact?' tagged':'')+' zone-'+p.zone;
    const tag=el.querySelector('.person-tag');if(tag)tag.textContent=labels[p.status]||'';
-   if(p.destination&&!this.destinations.has(p.destination.name)){const el=document.createElement('div');el.className='destination-marker';el.textContent='⚑ '+p.destination.name;this.destinations.set(p.destination.name,new maplibre.Marker({element:el}).setLngLat(p.destination.coordinates).addTo(this.map));}
+   if(p.destination&&p.guidance?.action==='evacuate')activeDestinations.add(p.destination.name);if(p.destination&&p.guidance?.action==='evacuate'&&!this.destinations.has(p.destination.name)){const el=document.createElement('div');el.className='destination-marker';el.textContent='⚑ '+p.destination.name;this.destinations.set(p.destination.name,new maplibre.Marker({element:el}).setLngLat(p.destination.coordinates).addTo(this.map));}
   }
   for(const [id,m] of this.markers)if(!people.some(p=>p.id===id)){m.remove();this.markers.delete(id);}
-  this.map.getSource('routes').setData(fc(paths));
+  for(const [name,marker]of this.destinations)if(!activeDestinations.has(name)){marker.remove();this.destinations.delete(name);}this.map.getSource('routes').setData(fc(paths));
  }
 
  /** County-wide flood depth tiles (Harris County, levels 1-7), built by scripts/houston-county-flood.py. */
@@ -136,7 +108,7 @@ export class ResponseMap{
 
  async setFloodMap(on,event=this.depthEvent||'100'){
   if(!this.loaded)return;if(on&&!this.state?.scenario?.id?.startsWith('houston'))return;
-  this.floodMode=on;this.depthEvent=event;this.floodControl.button?.setAttribute('aria-pressed',String(on));document.getElementById(this.container).classList.toggle('flood-map-mode',on);this.popup?.remove();
+  this.floodMode=on;if(this.waterLayer)this.waterLayer.enabled=!on;this.depthEvent=event;this.floodControl.button?.setAttribute('aria-pressed',String(on));document.getElementById(this.container).classList.toggle('flood-map-mode',on);this.popup?.remove();
   if(on){
    for(const id of SCENE_LAYERS)if(this.map.getLayer(id)&&!this.hidden.has(id)){this.hidden.set(id,this.map.getLayoutProperty(id,'visibility')||'visible');this.map.setLayoutProperty(id,'visibility','none');}
    const meta=await this.countyMeta();

@@ -1,8 +1,14 @@
 # SafeWay
 
-A local disaster-response demo with two scenarios: **Rasuwa flood** and **Houston flood**. Houston has three fully mapped floods in different parts of the city: **Hurricane Harvey (August 2017)** in Kingwood and Lake Houston (historical), a **downtown flash flood** on Buffalo and White Oak Bayous, and a **Brays Bayou flash flood** in Meyerland (both hypothetical). Each shows water rising by estimated depth, highly, moderately and lightly affected zones (over 3 ft, 1–3 ft, under 1 ft), and risks with mitigations. Nothing about the flood is drawn until you press Start. The wave button by the map controls opens a county-wide Harris County flood depth map (levels 1–7, 100-year or 500-year floodplain).
+A local flood-response demo for **Rasuwa, Nepal**, and three Houston scenarios: **Hurricane Harvey (2017)**, **downtown flash flooding**, and **Brays Bayou flooding**. Houston retains its FEMA/USGS-based estimated-depth data and the county flood-depth map.
 
-Start the simulation. The hazard expands across the 3D map, people inside its warning area are identified, and connected warning phones ring automatically. Answering establishes an actual WebRTC audio connection carrying a spoken destination and a three-minute drill instruction. The resident can acknowledge, share simulated route progress, send SOS, and stop sharing. A separate responder device follows progress and acknowledges SOS requests. Real device GPS is optional, separately consented, and labelled separately from simulated movement.
+The map now uses a continuous, terrain-following GPU water surface instead of 30 m columns. Street, Terrain and 3D views share the same scenario clock. Cohorts are **red (urgent exposure)**, **yellow (early action)** and **green (outside modeled inundation)**. Green does not mean verified real-world safety.
+
+Start the drill and every connected resident gets immediate on-screen guidance **and an automatic WebRTC voice call**, including green monitoring updates. The live arrival countdown is derived from the authored scenario progression. One playback second represents six scenario seconds; no calibrated flood arrival forecast is claimed. A resident can act on written guidance without waiting for a call to connect.
+
+Change the progression to 2× or 4× to test acceleration. If the demo route no longer clears the modeled flood in time, SafeWay withdraws it, cancels the old call, rejects stale acknowledgements, issues replacement guidance and creates a rescue task automatically. Shelter instructions require a defined viable **demo refuge** near the resident; otherwise guidance withholds movement and requests rescue without inventing a refuge. A slowdown cannot silently republish an already-withdrawn route.
+
+Real GPS remains separately consented and labelled. The responder sees shared progress, current guidance and automatically created rescue tasks. No real emergency service is contacted.
 
 ## Run
 
@@ -20,9 +26,11 @@ Then choose **Rasuwa / Flood** or **Houston / Flood** and press **Start simulati
 ## Device API
 
 - `POST /api/demo/connect` — exchange a private device link key and explicit consent for a role-scoped session.
+- `GET /api/demo/events` — role-scoped live guidance stream.
+- `GET /api/demo/audio/:callId` — current, authorized warning speech; superseded warnings return 410.
 - `GET /api/demo/state` — operator, own-phone or responder view, according to authorization.
 - `POST /api/demo/trigger` — start an exercise (`{"scenario":"rasuwa"}` or `{"scenario":"houston"}`), with dashboard authorization or the private trigger key from the generated endpoint. The trigger key only starts demo scenarios; it cannot read tracking or control calls.
-- `POST /api/demo/control` — start/pause/reset/switch scenario, operator only.
+- `POST /api/demo/control` — start/pause/reset/switch scenario or change progression (`{"action":"speed","speed":4}`), operator only.
 - `GET/POST /api/demo/signals` — session-isolated WebRTC SDP/ICE signaling.
 - `POST /api/demo/call/claim` — dashboard-only caller lease; one owner per negotiation.
 - `POST /api/demo/call` — call lifecycle, restricted to the owning phone/operator.
@@ -55,3 +63,9 @@ The response browser test uses three independent browser contexts and checks rea
 A phone can answer before an offer exists. Only an audio-enabled dashboard may claim the caller lease; another dashboard cannot send competing SDP. Each connection attempt carries a generation, and stale candidates/statuses cannot affect its replacement. Transient signaling requests retry idempotently. A failed peer reconnects automatically, up to three attempts, with a specific failure reason when exhausted.
 
 `npm run qa:calls` verifies eight repeated real voice calls across both scenarios, including early answers, two dashboards, a lost offer response, a temporary signaling error, peer recovery and caller takeover. Each new attempt must receive its own nonzero decoded audio; old call statistics cannot satisfy the test.
+
+## Current warning policy and visual checks
+
+`npm run qa:flood` verifies five independent screens, real decoded speech for all three zones and urgent replacement calls, immediate route withdrawal, stale-ack rejection and automatic rescue acknowledgement. The test isolates maps to keep software rendering from distorting voice measurements. `npm run qa:surface` separately exercises actual GPU water, all three map views and mobile layout. Artifacts are in ignored `outputs/`.
+
+Speech for each current guidance revision is generated locally with macOS Samantha (`say`), cached privately under `.sites-runtime/response-voice/`, and streamed over the existing WebRTC connection. This local launcher therefore needs macOS for dynamic voice generation. It makes no external AI or telephony request. The green demonstration resident is explicitly placed outside the modeled footprint, not renamed from a flooded point.
