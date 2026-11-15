@@ -1,0 +1,23 @@
+services:
+  headwater-db:
+    # The official HA image includes both TimescaleDB and PostGIS.
+    image: timescale/timescaledb-ha:pg17
+    container_name: headwater-db
+    environment:
+      POSTGRES_DB: headwater
+      POSTGRES_USER: headwater
+      POSTGRES_PASSWORD: ${HEADWATER_DB_PASSWORD:?Copy .env.database.example to .env.database and choose a password.}
+    ports:
+      # Host-only: never expose a hackathon database directly to the LAN/internet.
+      - "127.0.0.1:5434:5432"
+    volumes:
+      - headwater-db-data:/home/postgres/pgdata/data
+      - ./database/init:/docker-entrypoint-initdb.d:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U headwater -d headwater"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+
+volumes:
+  headwater-db-data:
