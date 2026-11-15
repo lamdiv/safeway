@@ -1,4 +1,4 @@
-import * as maplibre from '/vendor/maplibre-gl.mjs';import {labels} from './common.mjs';
+import * as maplibre from '/vendor/maplibre-gl.mjs';import {labels} from './common.mjs';import {WaterSurface,sceneTime,waterThreshold} from './water-surface.mjs';
 const fc=features=>({type:'FeatureCollection',features}),empty=()=>fc([]);
 const mercX=lng=>lng*20037508.34/180,mercY=lat=>Math.log(Math.tan((90+lat)*Math.PI/360))*6378137;
 const unmerc=(x,y)=>[x*180/20037508.34,Math.atan(Math.exp(y/6378137))*360/Math.PI-90];
@@ -22,7 +22,7 @@ const LAYERS_ICON='<svg viewBox="0 0 24 24" width="18" height="18" fill="none" s
 const AERIAL={usgs:{tiles:['https://basemap.nationalmap.gov/arcgis/rest/services/USGSImageryOnly/MapServer/tile/{z}/{y}/{x}'],maxzoom:16,attribution:'Imagery: USGS The National Map'},esri:{tiles:['https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}'],maxzoom:18,attribution:'Imagery: Esri, Maxar, Earthstar Geographics'}};
 const PREF_KEY='safeway-map-layers',DEFAULT_PREFS={base:'streets',water:true,zones:true,buildings:true,routes:true};
 // Which user switch controls which map layers.
-const PREF_OF={'buildings-3d':'buildings','flood-zones':'zones','zone-fill':'zones','zone-edge':'zones','hazard-fill':'water','hazard-edge':'water','warning-zone':'water','route-shadow':'routes','route-line':'routes'};
+const PREF_OF={'buildings-3d':'buildings','flood-zones':'zones','drill-zones':'zones','zone-fill':'zones','zone-edge':'zones','hazard-fill':'water','hazard-edge':'water','warning-zone':'water','route-shadow':'routes','route-line':'routes'};
 class LayersControl{
  constructor(map){this.rm=map;}
  onAdd(){
@@ -40,13 +40,13 @@ class LayersControl{
 }
 
 // Everything the simulation draws. Hidden while the flood depth map is open.
-const SCENE_LAYERS=['buildings-3d','zone-fill','zone-edge','warning-zone','hazard-fill','hazard-edge','flood-zones','flow-line','flow-arrows','route-shadow','route-line'];
+const SCENE_LAYERS=['buildings-3d','zone-fill','zone-edge','warning-zone','hazard-fill','hazard-edge','flood-zones','drill-zones','flow-line','flow-arrows','route-shadow','route-line'];
 // Drawn only once the simulation has started.
-const AFTER_START=['zone-fill','zone-edge','flood-zones','flow-line','flow-arrows'];
+const AFTER_START=['zone-fill','zone-edge','flood-zones','drill-zones','flow-line','flow-arrows'];
 
 export class ResponseMap{
  constructor(container,{compact=false}={}){
-  this.container=container;this.markers=new Map();this.destinations=new Map();this.compact=compact;this.hidden=new Map();
+  this.container=container;this.markers=new Map();this.destinations=new Map();this.compact=compact;this.view=compact?'street':'3d';this.moves=new Map();this.hidden=new Map();
   this.prefs={...DEFAULT_PREFS};if(!compact)try{Object.assign(this.prefs,JSON.parse(localStorage.getItem(PREF_KEY)||'{}'));}catch{}
   this.map=new maplibre.Map({container,style:'https://tiles.openfreemap.org/styles/liberty',center:[85.340,28.171],zoom:13.8,pitch:compact?0:57,bearing:compact?0:-18,canvasContextAttributes:{antialias:true},attributionControl:{compact:true}});
   this.map.addControl(new maplibre.NavigationControl({visualizePitch:true}),'top-right');
@@ -60,13 +60,15 @@ export class ResponseMap{
    for(const [k,a] of Object.entries(AERIAL)){this.map.addSource('aerial-'+k,{type:'raster',tiles:a.tiles,tileSize:256,maxzoom:a.maxzoom,attribution:a.attribution});this.map.addLayer({id:'aerial-'+k,type:'raster',source:'aerial-'+k,layout:{visibility:'none'},paint:{'raster-fade-duration':150}},label);}
    if(!compact)this.map.addLayer({id:'buildings-3d',type:'fill-extrusion',source:'openmaptiles','source-layer':'building',minzoom:13,paint:{'fill-extrusion-color':'#98a6a7','fill-extrusion-height':['max',5,['to-number',['get','render_height'],5]],'fill-extrusion-opacity':.86}},label);
    for(const id of ['hazard','warning','routes','zones','arrows'])this.map.addSource(id,{type:'geojson',data:empty()});
-   const zoneColor=['match',['get','zone'],'high','#d64541','medium','#f2c12e','#3fae5a'];
+   const zoneColor=['match',['get','zone'],'red','#df5149','yellow','#e6b544','#3ba684'];
    this.map.addLayer({id:'zone-fill',type:'fill',source:'zones',layout:{visibility:'none'},paint:{'fill-color':zoneColor,'fill-opacity':['match',['get','zone'],'high',.2,'medium',.15,.12]}},label);
    this.map.addLayer({id:'zone-edge',type:'line',source:'zones',layout:{visibility:'none'},paint:{'line-color':zoneColor,'line-width':1.2,'line-opacity':.75}},label);
    this.map.addLayer({id:'warning-zone',type:'line',source:'warning',paint:{'line-color':'#c4845b','line-width':1.5,'line-dasharray':[4,3],'line-opacity':.85}},label);
    this.map.addLayer({id:'hazard-fill',type:'fill',source:'hazard',paint:{'fill-color':'#47b9e4','fill-opacity':.48,'fill-antialias':true}},label);
    this.map.addLayer({id:'hazard-edge',type:'line',source:'hazard',layout:{'line-join':'round','line-cap':'round'},paint:{'line-color':'#77dcf4','line-width':2,'line-opacity':.95}},label);
-   if(!compact)this.map.addSource('water3d',{type:'geojson',data:empty()});
+   if(!compact)this.map.addSource('water3d',{type:'geojson',data:empty()});  // Princeton drill: depth-band water columns
+   this.waterLayer=new WaterSurface();this.map.addLayer(this.waterLayer,label);  // smooth continuous water for Rasuwa and Houston
+   for(const [id,source]of [['valley-relief','valley-dem'],['houston-relief','houston-dem']])this.map.addLayer({id,type:'hillshade',source,layout:{visibility:'none'},paint:{'hillshade-exaggeration':.65,'hillshade-shadow-color':'#5f6c63','hillshade-highlight-color':'#fff8df'}},label);
    this.map.addLayer({id:'flow-line',type:'line',source:'arrows',layout:{visibility:'none'},paint:{'line-color':'#0f5f8f','line-width':1.5,'line-opacity':.7,'line-dasharray':[2,2]}});
    this.map.addLayer({id:'flow-arrows',type:'symbol',source:'arrows',layout:{visibility:'none','symbol-placement':'line','symbol-spacing':90,'text-field':'›','text-font':['Noto Sans Bold'],'text-size':26,'text-keep-upright':false,'text-allow-overlap':true,'text-rotation-alignment':'map','text-offset':[0,-.12]},paint:{'text-color':'#0f5f8f','text-halo-color':'#ffffff','text-halo-width':1.5}});
    this.map.addLayer({id:'route-shadow',type:'line',source:'routes',layout:{'line-join':'round','line-cap':'round'},paint:{'line-color':'#fff','line-width':6,'line-opacity':.85}});
@@ -84,18 +86,38 @@ export class ResponseMap{
   if(this.loaded){
    const s=this.state?.scenario,us=s&&s.id!=='rasuwa',aerial=this.prefs.base==='aerial';
    this.setVisible('aerial-usgs',aerial&&us);this.setVisible('aerial-esri',aerial&&!us);
-   this.setVisible('buildings-3d',!this.compact);for(const id of ['route-shadow','route-line'])this.setVisible(id,true);
+   this.setVisible('buildings-3d',!this.compact&&this.view==='3d');for(const id of ['route-shadow','route-line'])this.setVisible(id,true);
    if(this.state)this.update(this.state);this.lastT=null;
   }
   this.layersControl?.sync();
  }
 
  /** Gridded flood (Houston): the affected-zones image and the 3D water built from the depth grid. */
+ /** Princeton drill: static red/yellow/green zones image and depth-band water (unchanged design).
+  *  Other gridded floods: the teammate's time-aware zone canvas and the smooth WaterSurface. */
+ isBandDrill(r){return r?.terrain===false;}
  rasterLayers(r){
-  const source=this.map.getSource('flood-zones');
-  if(source)source.updateImage({url:r.url+'zones.png',coordinates:r.bounds});
-  else{this.map.addSource('flood-zones',{type:'image',url:r.url+'zones.png',coordinates:r.bounds});this.map.addLayer({id:'flood-zones',type:'raster',source:'flood-zones',layout:{visibility:'none'},paint:{'raster-opacity':.2,'raster-resampling':'linear','raster-fade-duration':0}},this.label);}
-  if(!this.compact)this.buildWater(r);
+  if(this.isBandDrill(r)){
+   const source=this.map.getSource('drill-zones');
+   if(source)source.updateImage({url:r.url+'zones.png',coordinates:r.bounds});
+   else{this.map.addSource('drill-zones',{type:'image',url:r.url+'zones.png',coordinates:r.bounds});this.map.addLayer({id:'drill-zones',type:'raster',source:'drill-zones',layout:{visibility:'none'},paint:{'raster-opacity':.2,'raster-resampling':'linear','raster-fade-duration':0}},this.label);}
+   if(!this.compact)this.buildWater(r);
+   return Promise.resolve();
+  }
+  this.clearBands();return this.zoneRaster(r);
+ }
+ clearBands(){this.waterToken=null;this.waterReady=null;for(const b of this.waterBandRanges||[])if(this.map.getLayer(b.id))this.map.setPaintProperty(b.id,'fill-extrusion-opacity',0),b.o=0;}
+ /** Zone colors are separate from the continuous blue water surface. */
+ async zoneRaster(r){
+  const key=this.zoneKey=r.key,cells=new Uint16Array(await fetch(r.url+'depth.bin').then(x=>x.arrayBuffer()));if(this.zoneKey!==key)return;
+  this.zoneCells=cells;this.zoneMeta=r;this.zoneCanvas??=document.createElement('canvas');this.zoneCanvas.width=256;this.zoneCanvas.height=Math.max(2,Math.round(256*r.size[1]/r.size[0]));
+  if(this.map.getSource('flood-zones'))this.map.getSource('flood-zones').setCoordinates(r.bounds);
+  else{this.map.addSource('flood-zones',{type:'canvas',canvas:this.zoneCanvas,coordinates:r.bounds,animate:true});this.map.addLayer({id:'flood-zones',type:'raster',source:'flood-zones',layout:{visibility:'none'},paint:{'raster-opacity':.22,'raster-resampling':'linear','raster-fade-duration':0}},this.label);}
+  this.paintZones();
+ }
+ paintZones(){if(!this.zoneCanvas||!this.zoneCells||!this.state||this.zoneMeta.key!==this.state.scenario.raster?.key)return;const r=this.zoneMeta,[w,h]=r.size,c=this.zoneCanvas,context=c.getContext('2d'),image=context.createImageData(c.width,c.height),threshold=waterThreshold(r,(this.state.modelTime??this.state.elapsed)+(this.state.speed||1)*18);
+  for(let y=0;y<c.height;y++)for(let x=0;x<c.width;x++){const value=this.zoneCells[Math.min(h-1,Math.floor(y/c.height*h))*w+Math.min(w-1,Math.floor(x/c.width*w))],depth=value?(value-1)/10:null,color=depth===null?[59,166,132]:depth>3||depth>=threshold?[223,81,73]:[230,181,68],i=(y*c.width+x)*4;image.data.set([...color,190],i);}
+  context.putImageData(image,0,0);const source=this.map.getSource('flood-zones');if(this.state.mode==='running')source?.play();else source?.pause();this.map.triggerRepaint();
  }
 
  /** Turn the depth grid into 30 m water columns (each keeps the mean depth of its flooded cells), split into
@@ -123,7 +145,8 @@ export class ResponseMap{
   if(this.animating)return;this.animating=true;
   const colour=depth=>{let c=DEPTH_COLORS[0];for(let i=1;i<DEPTH_COLORS.length;i+=2)if(depth>=DEPTH_COLORS[i])c=DEPTH_COLORS[i+1];return c;};
   const frame=()=>{
-   const st=this.state,s=st?.scenario,r=s?.raster,live=r&&!this.compact&&this.loaded&&st.mode!=='ready'&&this.waterReady===r.key;
+   {const now=performance.now();for(const [id,move]of this.moves){const marker=this.markers.get(id);if(!marker){this.moves.delete(id);continue;}const t=Math.min(1,(now-move.at)/250),e=t*t*(3-2*t);marker.setLngLat(move.from.map((v,i)=>v+(move.to[i]-v)*e));if(t===1)this.moves.delete(id);}}
+   const st=this.state,s=st?.scenario,r=s?.raster,live=r&&this.isBandDrill(r)&&!this.compact&&this.loaded&&st.mode!=='ready'&&this.waterReady===r.key;
    let T=Infinity;
    if(live){const now=performance.now(),est=Math.min(s.duration,st.elapsed+(st.mode==='running'?(now-this.clockAt)/1000:0));this.estElapsed=Math.max(this.estElapsed??0,est);T=thresholdAt(r,this.estElapsed);}
    if(T!==this.lastT){
@@ -140,38 +163,40 @@ export class ResponseMap{
   requestAnimationFrame(frame);
  }
 
+ setView(view){if(!['street','terrain','3d'].includes(view))return;this.view=view;if(!this.loaded)return;this.applyTerrain(this.state?.scenario);this.setVisible('buildings-3d',view==='3d'&&!this.compact&&this.prefs.buildings);this.setVisible('valley-relief',view==='terrain'&&this.scenario==='rasuwa');this.setVisible('houston-relief',view==='terrain'&&!!this.scenario&&this.scenario!=='rasuwa');this.map.easeTo({pitch:view==='street'?0:58,bearing:view==='street'?0:-18,duration:650});this.waterLayer?.refresh();document.getElementById(this.container).dataset.view=view;}
+
  applyTerrain(s){
-  if(this.compact||this.floodMode||!s){this.map.setTerrain(null);return;}
+  if(this.compact||this.view==='street'||this.floodMode||!s){this.map.setTerrain(null);return;}
   this.map.setTerrain(s.id==='rasuwa'?{source:'valley-dem',exaggeration:1}:s.raster?(s.raster.terrain===false?null:{source:'houston-dem',exaggeration:s.raster.exaggeration??HOUSTON_EXAGGERATION}):s.terrain?{source:'houston-dem',exaggeration:s.terrain.exaggeration}:null);
  }
 
  update(state,{people=state.people||[],routes=true}={}){
   const prev=this.state;this.state=state;this.clockAt=performance.now();if(!prev||state.elapsed<prev.elapsed-.5||state.mode==='ready'||prev.scenario?.id!==state.scenario?.id){this.estElapsed=state.elapsed;this.lastT=null;}
-  if(!this.loaded)return;this.animate();const s=state.scenario,started=state.mode&&state.mode!=='ready';
+  if(!this.loaded)return;this.animate();this.waterLayer?.setState(state,this.clockAt);const s=state.scenario,started=state.mode&&state.mode!=='ready';if(this.waterLayer)this.waterLayer.enabled=!this.floodMode&&this.prefs.water&&!this.isBandDrill(s.raster);
   if(this.scenario!==s.id){
-   this.scenario=s.id;this.applyTerrain(s);
-   if(!this.floodMode)this.map.flyTo({center:s.center,zoom:this.compact?s.zoom+.4:s.zoom,pitch:this.compact?0:s.pitch,bearing:this.compact?0:s.bearing,duration:600});
+   this.scenario=s.id;this.applyTerrain(s);if(!this.isBandDrill(s.raster))this.waterLayer.setScenario(s).catch(error=>{document.getElementById(this.container).dataset.waterError=error.message;});
+   if(!this.floodMode)this.map.flyTo({center:s.center,zoom:this.compact?s.zoom+.4:s.zoom,pitch:this.compact||this.view==='street'?0:s.pitch,bearing:this.compact?0:s.bearing,duration:600});
    for(const m of this.destinations.values())m.remove();this.destinations.clear();
-   const z=state.zones||{};this.map.getSource('zones').setData(fc(['low','medium','high'].flatMap(k=>(z[k]?.features||[]).map(f=>({...f,properties:{zone:k}})))));
+   const z=state.zones||{},features=[];for(const f of z.medium?.features||[]){const hole=z.high?.features[0]?.geometry.coordinates[0];features.push({...f,properties:{zone:'yellow'},geometry:{type:'Polygon',coordinates:[f.geometry.coordinates[0],...(hole?[[...hole].reverse()]:[])]}});}features.push(...(z.high?.features||[]).map(f=>({...f,properties:{zone:'red'}})));for(const p of people.filter(p=>p.zone==='green')){const ring=Array.from({length:65},(_,i)=>{const a=i/64*Math.PI*2;return [p.start[0]+Math.cos(a)*150/(111195*Math.cos(p.start[1]*Math.PI/180)),p.start[1]+Math.sin(a)*150/111195];});features.push({type:'Feature',properties:{zone:'green'},geometry:{type:'Polygon',coordinates:[ring]}});}this.map.getSource('zones').setData(fc(features));
    this.map.getSource('arrows').setData(s.arrows||empty());
-   if(s.raster)this.rasterLayers(s.raster);
+   if(s.raster)this.rasterLayers(s.raster).catch(()=>{});else this.clearBands();
    if(this.prefs.base==='aerial')queueMicrotask(()=>this.setPrefs());
    if(this.floodControl.el)this.floodControl.el.hidden=!s.id.startsWith('houston');
    if(this.floodMode&&!s.id.startsWith('houston'))this.setFloodMap(false);
   }
-  for(const id of AFTER_START)this.setVisible(id,started&&(id.startsWith('flood')?!!s.raster:!s.raster));
-  this.map.getSource('hazard').setData(s.raster?empty():state.hazard||empty());this.map.getSource('warning').setData(s.raster?empty():state.warning||empty());
-  const paths=[];
+  for(const id of AFTER_START)this.setVisible(id,started&&(id==='flood-zones'?!!s.raster&&!this.isBandDrill(s.raster):id==='drill-zones'?this.isBandDrill(s.raster):!s.raster));
+  this.map.getSource('hazard').setData(empty());this.map.getSource('warning').setData(s.raster?empty():state.warning||empty());
+  if(s.raster&&!this.isBandDrill(s.raster))this.paintZones();const paths=[],activeDestinations=new Set();
   for(const p of people){
-   if(routes&&(p.atRisk||p.acknowledged||p.call)&&p.route?.length>1)paths.push({type:'Feature',geometry:{type:'LineString',coordinates:p.route},properties:{}});
+   if(routes&&p.guidance?.action==='evacuate'&&p.route?.length>1)paths.push({type:'Feature',geometry:{type:'LineString',coordinates:p.route},properties:{}});
    let marker=this.markers.get(p.id);
-   if(!marker){const el=document.createElement('div');el.className='person-marker';el.title=p.name;const i=document.createElement('span');i.textContent=p.initials||p.name.split(' ').map(n=>n[0]).join('');const tag=document.createElement('span');tag.className='person-tag';el.append(i,tag);marker=new maplibre.Marker({element:el}).setLngLat(p.position).addTo(this.map);this.markers.set(p.id,marker);}
-   marker.setLngLat(p.position);const el=marker.getElement();el.className='person-marker'+(p.atRisk?' risk':'')+(p.acknowledged||p.arrived?' moving':'')+(started&&!this.compact?' tagged':'');
+   if(!marker){const el=document.createElement('div');el.className='person-marker';el.title=p.name;const i=document.createElement('span');i.textContent=p.initials||p.name.split(' ').map(n=>n[0]).join('');const tag=document.createElement('span');tag.className='person-tag';el.append(i,tag);marker=new maplibre.Marker({element:el,subpixelPositioning:true}).setLngLat(p.position).addTo(this.map);this.markers.set(p.id,marker);}
+   const current=marker.getLngLat().toArray();if(Math.hypot(current[0]-p.position[0],current[1]-p.position[1])>1e-9)this.moves.set(p.id,{from:current,to:p.position,at:performance.now()});const el=marker.getElement();el.className='person-marker'+(p.atRisk?' risk':'')+(p.acknowledged||p.arrived?' moving':'')+(started&&!this.compact?' tagged':'')+' zone-'+p.zone;
    const tag=el.querySelector('.person-tag');if(tag)tag.textContent=labels[p.status]||'';
-   if(p.destination&&!this.destinations.has(p.destination.name)){const el=document.createElement('div');el.className='destination-marker';el.textContent='⚑ '+p.destination.name;this.destinations.set(p.destination.name,new maplibre.Marker({element:el}).setLngLat(p.destination.coordinates).addTo(this.map));}
+   if(p.destination&&p.guidance?.action==='evacuate')activeDestinations.add(p.destination.name);if(p.destination&&p.guidance?.action==='evacuate'&&!this.destinations.has(p.destination.name)){const el=document.createElement('div');el.className='destination-marker';el.textContent='⚑ '+p.destination.name;this.destinations.set(p.destination.name,new maplibre.Marker({element:el}).setLngLat(p.destination.coordinates).addTo(this.map));}
   }
   for(const [id,m] of this.markers)if(!people.some(p=>p.id===id)){m.remove();this.markers.delete(id);}
-  this.map.getSource('routes').setData(fc(paths));
+  for(const [name,marker]of this.destinations)if(!activeDestinations.has(name)){marker.remove();this.destinations.delete(name);}this.map.getSource('routes').setData(fc(paths));
  }
 
  /** County-wide flood depth tiles (Harris County, levels 1-7), built by scripts/houston-county-flood.py. */
@@ -179,7 +204,7 @@ export class ResponseMap{
 
  async setFloodMap(on,event=this.depthEvent||'100'){
   if(!this.loaded)return;if(on&&!this.state?.scenario?.id?.startsWith('houston'))return;
-  this.floodMode=on;this.depthEvent=event;this.floodControl.button?.setAttribute('aria-pressed',String(on));document.getElementById(this.container).classList.toggle('flood-map-mode',on);this.popup?.remove();
+  this.floodMode=on;if(this.waterLayer)this.waterLayer.enabled=!on&&this.prefs.water&&!this.isBandDrill(this.state?.scenario?.raster);this.depthEvent=event;this.floodControl.button?.setAttribute('aria-pressed',String(on));document.getElementById(this.container).classList.toggle('flood-map-mode',on);this.popup?.remove();
   if(on){
    for(const id of [...SCENE_LAYERS,...(this.waterBands||[])])if(this.map.getLayer(id)&&!this.hidden.has(id)){this.hidden.set(id,this.map.getLayoutProperty(id,'visibility')||'visible');this.map.setLayoutProperty(id,'visibility','none');}
    const meta=await this.countyMeta();

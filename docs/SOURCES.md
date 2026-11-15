@@ -51,3 +51,7 @@ Built by `scripts/houston-floods.py` into `public/data/floods/<harvey|downtown|b
 - Houston 3D terrain: AWS Terrain Tiles (Terrarium encoding, https://s3.amazonaws.com/elevation-tiles-prod/terrarium/{z}/{x}/{y}.png), which use USGS 3DEP in the US. Shown with 4× vertical exaggeration.
 - Princeton drill: Lake Carnegie and Stony Brook outlines from OpenStreetMap (© OpenStreetMap contributors) seed an artificial connected-bathtub flood on USGS 3DEP 5 m elevation (`scripts/houston-floods.py`, scenario `princeton`). Rabinowitz Hall 3D tour: public Matterport model P3S6VUTP3qB.
 - Aerial base map: USGS The National Map, USGSImageryOnly (public domain) for US scenarios; Esri World Imagery (Esri, Maxar, Earthstar Geographics) for Rasuwa.
+
+### Live response and continuous water
+
+The renderer uses MapLibre custom-layer projection and terrain elevation: https://maplibre.org/maplibre-gl-js/docs/API/interfaces/CustomLayerInterface/ and https://maplibre.org/maplibre-gl-js/docs/API/classes/Map/#queryterrainelevation . Visual interpolation does not add measurement resolution. Arrival countdowns derive from the authored scenario timeline, not a FEMA arrival forecast. Refuges and traversal windows are defined for the exercise and are not verified real shelters.

@@ -13,6 +13,7 @@ const browser=await chromium.launch({headless:true,ignoreDefaultArgs:['--mute-au
 const contexts=await Promise.all([browser.newContext(),browser.newContext(),browser.newContext({viewport:{width:390,height:844}})]);
 for(const context of contexts)await context.route('**/demo/map.mjs',route=>route.fulfill({contentType:'application/javascript',body:"export class ResponseMap{constructor(id){document.getElementById(id).dataset.ready='true'}update(){}locate(){}gps(){}}"}));
 for(const context of contexts.slice(0,2)){
+ await context.route('**/api/demo/events',route=>route.abort());
  await context.route('**/api/demo/state',async route=>{if(hold)await new Promise(resolve=>releases.push(resolve));await route.continue();});
  await context.route('**/api/demo/signals',async route=>{
   const input=route.request().method()==='POST'?route.request().postDataJSON():null;
@@ -43,8 +44,8 @@ try{
  await Promise.all(ops.map(p=>p.goto(base)));
  for(let index=0;index<8;index++){
   const scenario=index%2?'houston':'rasuwa';
-  await ops[0].locator('button[data-scenario="'+scenario+'"]').click();
-  if(index)await ops[1].locator('button[data-scenario="'+scenario+'"]').click();
+  await ops[0].locator('.scenario-tabs button[data-scenario="'+scenario+'"]').click();
+  if(index)await ops[1].locator('.scenario-tabs button[data-scenario="'+scenario+'"]').click();
   await phone.goto(base+'/phone?key=test-phone&person='+scenario+'-a');
   const joined=phone.waitForResponse(r=>r.url().endsWith('/api/demo/connect')&&r.request().method()==='POST');
   await phone.locator('#connect').click();const token=(await(await joined).json()).token;
@@ -52,6 +53,7 @@ try{
   hold=true;injectFault=index===3?'before-send':index===5?'lost-response':null;
   demo.control({action:'start'});
   if(scenario==='rasuwa')for(let i=0;i<15;i++){offset+=1000;demo.deviceState(token);}
+  demo.control({action:'pause'});
   await phone.locator('#call-screen:not([hidden])').waitFor();
   await phone.locator('#answer').click();
   await phone.waitForFunction(()=>document.body.dataset.callStatus==='answered',null,{timeout:10000,polling:100});

@@ -21,6 +21,17 @@ export function createServer({engine,operatorToken=process.env.SAFEWAY_OPERATOR_
    if(path==='/api/demo/connect'){post();return out(res,200,demo.connect(await body(req)));}
    if(path==='/api/demo/matterport-config'&&req.method==='GET'){admin();const b=demo.operatorState().scenario.building;if(!b)return out(res,404,{error:'This scenario has no Matterport building'});if(!process.env.MATTERPORT_SDK_KEY)return out(res,503,{error:'Local Matterport SDK key is not configured'});return out(res,200,{modelId:b.modelId,applicationKey:process.env.MATTERPORT_SDK_KEY,assetBase:'matterport-assets',note:'SDK key for browser use, restricted to localhost; the API token never leaves the server.'});}
    if(path==='/api/demo/agent'){admin();if(req.method==='GET'){const c=modelConfiguration();return out(res,200,{framework:'LangChain Deep Agents',provider:c.providerLabel,model:c.model,configured:c.configured,maxModelCalls:c.limits.maxCalls});}post();const input=await body(req);try{return out(res,200,await planResponse(demo,{question:input.question||undefined}));}catch(e){if(e.status)throw e;const quota=/Too many tokens|ThrottlingException|throttl/i.test(`${e.name} ${e.message}`);throw Object.assign(new Error(quota?'AWS Bedrock refused the request: this account has used its daily token quota (ThrottlingException). Try again later or ask AWS to raise the Bedrock quota.':'The model provider could not complete the request: '+String(e.message).slice(0,200)),{status:quota?429:502});}}
+   if(path==='/api/demo/events'&&req.method==='GET'){
+    if(!isOperator)demo.deviceState(bearer,{touch:false});
+    res.writeHead(200,{'Content-Type':'text/event-stream','Cache-Control':'no-store','Connection':'keep-alive','X-Accel-Buffering':'no'});
+    const send=()=>{if(res.destroyed)return;if(res.writableLength>1000000){res.end();return;}try{const state=isOperator?demo.operatorState():demo.deviceState(bearer,{touch:false});res.write('data: '+JSON.stringify(state)+'\n\n');}catch{res.end();}};
+    const unsubscribe=demo.subscribe(send);send();const heartbeat=setInterval(()=>{if(!res.destroyed)res.write(': heartbeat\n\n');},10000);req.on('close',()=>{clearInterval(heartbeat);unsubscribe();});return;
+   }
+   if(path.startsWith('/api/demo/audio/')&&req.method==='GET'){
+    const text=demo.audioText(bearer,path.split('/').at(-1),isOperator);const {warningVoice}=await import('./src/demo/voice.mjs');const data=await warningVoice(text);
+    // Recheck after synthesis so an obsolete warning cannot be fetched after withdrawal.
+    demo.audioText(bearer,path.split('/').at(-1),isOperator);res.writeHead(200,{'Content-Type':'audio/wav','Cache-Control':'no-store'});res.end(data);return;
+   }
    if(path==='/api/demo/state'&&req.method==='GET')return out(res,200,isOperator?demo.operatorState():demo.deviceState(bearer));
    if(path==='/api/demo/control'||path==='/api/demo/trigger'){post();const triggerAuthorized=path==='/api/demo/trigger'&&triggerToken&&(url.searchParams.get('key')===triggerToken||req.headers['x-demo-key']===triggerToken);if(!triggerAuthorized)admin();const input=await body(req);if(path.endsWith('/trigger')){if(input.scenario)demo.control({action:'scenario',scenario:input.scenario});return out(res,200,demo.control({action:'start'}));}return out(res,200,demo.control(input));}
    if(path==='/api/demo/action'){post();return out(res,200,demo.deviceAction(bearer,await body(req)));}

@@ -1,25 +1,20 @@
-# Current demo status
+# Current SafeWay demo status
 
-The default experience is now the focused Rasuwa flood / Houston flood response simulation requested by the user. It replaces the source-loading and scenario-slider dashboard.
+The default is Rasuwa flood response plus three Houston flood scenarios: historical Hurricane Harvey, hypothetical downtown flooding, and hypothetical Brays Bayou flooding. Houston retains the existing estimated-depth grids and county flood-depth reference map.
 
-Implemented: 3D OSM map, terrain-following valley corridor display, three fully mapped Houston floods (Hurricane Harvey 2017 plus two hypothetical flash floods) with affected zones and mitigation guidance, flood overlays hidden until Start, pre-impact warning zones, deterministic person exposure, automatic per-device warning calls, actual WebRTC voice transmission, in-browser ring/answer/end, destination and three-minute drill instruction, acknowledgement, simulated route movement, opt-in live device GPS, responder tracking, SOS and acknowledgement, Stop Sharing, pause/reset and stale-call isolation. Device URLs are private local files and are not shown in the dashboard.
+## Current behavior
 
-The launcher provides localhost HTTP plus LAN HTTPS over shared application state, with a locally generated certificate. Phone pages need a Connect tap and must stay open. Native background calling and blocked/isolated guest-network traversal are not claimed; no TURN relay or real telephony provider is configured.
-
-All hazard progression, people, routes, destinations and timing are authored exercises. The Rasuwa corridor follows the cached terrain profile; Houston floods use mapped flood outlines with estimated depth (FwDET on USGS elevation). Neither is a calibrated hydraulic solver or a public emergency instruction.
-
-Real GPS is separately consented and labelled, never moved into Nepal/Houston or used as an exercise resident's physical location. Stop Sharing removes it and rejects further uploads. Active resident data is in memory and is cleared on restart.
-
-Earlier source-monitoring, AI and sponsor functionality is retained outside the default demo and is not required for this workflow. CoStar/Vexcel matched-property verification and successful live Bedrock inference remain unclaimed. Main is preserved; development uses the safeway branch.
+- Continuous GPU water replaces the 30 m columns. Scene-relative coordinates remove terrain precision artifacts; shorelines and ripples interpolate continuously. Street, Terrain and 3D views use the same scenario clock.
+- Red, yellow and green cohorts get immediate written guidance and automatic WebRTC voice calls. The green demonstration resident is deliberately outside the modeled footprint, not a flooded resident relabelled safe.
+- Per-person arrival countdowns derive from authored progression with six scenario seconds per playback second. Dry or unmodeled locations do not get invented arrival times.
+- Changing progression to 2× or 4× re-evaluates route viability. Unsafe routes are removed, old calls canceled, and stale acknowledgements refused before replacement guidance is issued.
+- Shelter guidance requires a defined viable exercise refuge near the resident. Otherwise the system withholds the unsafe route and requests rescue without inventing a refuge. A slowdown does not silently restore a withdrawn route.
+- Rescue tasks are created automatically. A resident does not need to press SOS or wait for a voice call. Responder acknowledgement, refuge acknowledgement and evacuation arrival are distinct states.
+- Role-scoped SSE pushes current guidance. Independent heartbeat polling preserves truthful online status. Stop Sharing removes GPS, stops notifications and rejects subsequent uploads.
+- Existing caller leases, generation isolation, idempotent signaling and bounded WebRTC retries remain. Dynamic speech uses local macOS Samantha and private cache files; it does not invoke a cloud model or real phone-number network.
 
 ## Verification
 
-83 unit/API tests pass. Both scenarios pass three-context browser transport checks with nonzero incoming RTP bytes, decoded audio energy and remote waveform amplitude, complete spoken calls, consented GPS, simulated route movement, responder SOS acknowledgement, arrival and Stop Sharing. The transport test isolates the maps to avoid software-rendering contention; the separate visual test uses the actual OSM renderer and verifies full-height 3D flood/fire layers, Nepal terrain, and desktop/mobile layout. Syntax and production build checks pass. These checks do not certify connectivity between physical phones on an isolated guest network.
+103 unit/API tests pass; syntax and production build checks pass. A five-context integration test verified actual decoded speech for initial and updated red/yellow/green calls, route withdrawal, stale-ack rejection, automatic rescue and responder acknowledgement. Its local urgent-update measurement was 118 ms. Separate visual browser checks verified real GPU water, terrain and mobile layout for both regions.
 
-The generated private LAN HTTPS trigger and warning-phone URL were also verified against the running service: localhost dashboard caller → private HTTPS trigger → automatic HTTPS-phone ring → nonzero decoded WebRTC speech. The browser accepted the local certificate for this check. Physical-device connectivity still depends on the Wi-Fi/hotspot allowing peers.
-
-## Intermittent call fix
-
-Fixed early-answer offer preparation, a blocking silent-playback unlock, competing dashboard callers, stale SDP/ICE/status updates and dropped signaling requests. A caller lease and attempt generation now isolate each connection. Connection failures retry automatically up to three attempts, while intentional end/reset/sharing revocation cannot restart audio. An unarmed dashboard cannot steal a call from an armed caller.
-
-88 unit/API tests pass. Eight consecutive browser calls passed with real decoded speech under fast answering, two dashboards, signaling failures, a forced peer loss and a closed caller tab. The existing full flood/fire workflow also passed. Run `npm run qa:calls` for the reliability checks.
+These are local demo checks, not certification of physical-device Wi-Fi connectivity, rendering frame rate, calibrated arrival accuracy or real-world evacuation outcomes. Hazards, timings, demo residents, route traversal assumptions and refuges remain authored exercise data. No real emergency service is dispatched.

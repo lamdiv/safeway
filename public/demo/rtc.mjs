@@ -44,11 +44,12 @@ export class CallHost {
 
   async buffer(url) {
     if (!this.buffers.has(url)) {
-      const promise = fetch(url, {signal: AbortSignal.timeout(6000)})
+      const promise = fetch(url, {signal: AbortSignal.timeout(15000)})
         .then(r => { if (!r.ok) throw new Error('Warning audio unavailable'); return r.arrayBuffer(); })
         .then(bytes => this.context.decodeAudioData(bytes))
         .catch(error => { this.buffers.delete(url); throw error; });
       this.buffers.set(url, promise);
+      if (this.buffers.size > 8) this.buffers.delete(this.buffers.keys().next().value);
     }
     return this.buffers.get(url);
   }
@@ -183,7 +184,7 @@ export class CallHost {
     this.cursor = Math.max(this.cursor, result.cursor);
   }
 
-  close() { for (const peer of this.peers.values()) this.dispose(peer); }
+  close() { for (const peer of this.peers.values()) this.dispose(peer); this.buffers.clear(); this.claimAfter.clear(); }
 }
 
 export class WarningPhone {

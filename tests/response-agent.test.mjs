@@ -35,7 +35,7 @@ test('Response agent runs the real Deep Agents loop: plans, reads the live drill
 test('Agent tools read the drill without changing it and report real grid values',async()=>{
  const d=drill(),before=JSON.stringify(d.operatorState().people),t=responseTools(d);
  const s=JSON.parse(await t.getSituation.invoke({}));assert.equal(s.drill.scenario,'Hurricane Harvey · August 2017');assert.equal(s.residents.length,3);assert.ok(s.residents[0].homeDepthFt>3,'Jordan lives in highly affected water');
- const w=JSON.parse(await t.timeUntilWater.invoke({personId:'houston-c'}));assert.ok(w.warningDueAtSecond>w.secondsFromNow);
+ const w=JSON.parse(await t.timeUntilWater.invoke({personId:'houston-b'}));assert.ok(w.warningDueAtSecond>w.secondsFromNow);const g=JSON.parse(await t.timeUntilWater.invoke({personId:'houston-c'}));assert.equal(g.warningDueAtSecond,null,'the green resident is outside the water');
  const r=JSON.parse(await t.checkRoute.invoke({personId:'houston-a'}));assert.equal(r.assemblyPointDry,true);
  assert.equal(JSON.stringify(d.operatorState().people),before,'reading does not change the drill');d.close();
 });
