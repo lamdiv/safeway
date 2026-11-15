@@ -1,0 +1,82 @@
+{
+ "scenario": "downtown",
+ "radiusM": 250,
+ "buildings": 839,
+ "flooded": 239,
+ "byZone": {
+  "high": 114,
+  "medium": 56,
+  "low": 69,
+  "dry": 600
+ },
+ "wetAtVexcelGround": 139,
+ "terrainCheck": {
+  "n": 839,
+  "meanDiffFt": 2.48,
+  "meanAbsDiffFt": 2.95,
+  "medianAbsDiffFt": 2.3,
+  "within1Ft": 0.192,
+  "note": "Vexcel building ground elevation minus USGS 3DEP 5 m bare earth at the footprint centroid. Vexcel reports whole feet."
+ },
+ "homes": [
+  {
+   "person": "a",
+   "start": [
+    -95.367478,
+    29.763677
+   ],
+   "gridDepthFt": 7.6,
+   "photo": "houston-downtown-a.jpg",
+   "nearestBuilding": {
+    "type": "single_family",
+    "vexcelGroundM": 17.98,
+    "dep3GroundM": 11.43,
+    "gridDepthFt": 4.8,
+    "padDepthFt": 0.0,
+    "heightM": null,
+    "stories": null,
+    "areaM2": 43.6
+   }
+  },
+  {
+   "person": "b",
+   "start": [
+    -95.371567,
+    29.760594
+   ],
+   "gridDepthFt": 2.5,
+   "photo": "houston-downtown-b.jpg",
+   "nearestBuilding": {
+    "type": null,
+    "vexcelGroundM": 12.19,
+    "dep3GroundM": 11.97,
+    "gridDepthFt": 3.6,
+    "padDepthFt": 2.9,
+    "heightM": null,
+    "stories": null,
+    "areaM2": 144.3
+   }
+  },
+  {
+   "person": "c",
+   "start": [
+    -95.372375,
+    29.765668
+   ],
+   "gridDepthFt": 0.9,
+   "photo": "houston-downtown-c.jpg",
+   "nearestBuilding": {
+    "type": null,
+    "vexcelGroundM": 13.72,
+    "dep3GroundM": 13.47,
+    "gridDepthFt": null,
+    "padDepthFt": null,
+    "heightM": null,
+    "stories": null,
+    "areaM2": 152.6
+   }
+  }
+ ],
+ "source": "Vexcel API 2.0 property elements and ortho imagery (\u00a9 Vexcel Imaging US, Inc.); USGS 3DEP; SafeWay FwDET depth grid",
+ "generatedAt": "2026-11-15T10:15:36Z"
+}

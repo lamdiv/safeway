@@ -19,28 +19,31 @@ class FloodMapControl{
 
 const LAYERS_ICON='<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round" aria-hidden="true"><path d="M12 3 2 8l10 5 10-5-10-5Z"/><path d="m2 13 10 5 10-5"/><path d="m2 17.5 10 5 10-5"/></svg>';
 // Aerial photos: USGS National Map imagery (public domain) in the US, Esri World Imagery elsewhere.
-const AERIAL={usgs:{tiles:['https://basemap.nationalmap.gov/arcgis/rest/services/USGSImageryOnly/MapServer/tile/{z}/{y}/{x}'],maxzoom:16,attribution:'Imagery: USGS The National Map'},esri:{tiles:['https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}'],maxzoom:18,attribution:'Imagery: Esri, Maxar, Earthstar Geographics'}};
-const PREF_KEY='safeway-map-layers',DEFAULT_PREFS={base:'streets',water:true,zones:true,buildings:true,routes:true};
+// Aerial base map: Vexcel ortho only, tiled by our server with the team's Vexcel key (src/demo/vexcel.mjs).
+// Vexcel covers the Houston and Princeton drills; Rasuwa (Nepal) has no Vexcel imagery, so it keeps the street map.
+const VEXCEL_ATTRIBUTION='Imagery © Vexcel Imaging US, Inc.';
+const AERIAL={houston:{bounds:[-96.0,29.4,-94.8,30.3]},princeton:{bounds:[-74.80,40.25,-74.50,40.45]}};
+const PREF_KEY='safeway-map-layers',DEFAULT_PREFS={base:'streets',water:true,zones:true,buildings:true,routes:true,vexcel:false};
 // Which user switch controls which map layers.
-const PREF_OF={'buildings-3d':'buildings','flood-zones':'zones','drill-zones':'zones','zone-fill':'zones','zone-edge':'zones','hazard-fill':'water','hazard-edge':'water','warning-zone':'water','route-shadow':'routes','route-line':'routes'};
+const PREF_OF={'buildings-3d':'buildings','flood-zones':'zones','drill-zones':'zones','zone-fill':'zones','zone-edge':'zones','hazard-fill':'water','hazard-edge':'water','warning-zone':'water','route-shadow':'routes','route-line':'routes','vexcel-buildings':'vexcel'};
 class LayersControl{
  constructor(map){this.rm=map;}
  onAdd(){
   const el=document.createElement('div');el.className='maplibregl-ctrl maplibregl-ctrl-group layers-ctrl';
   const b=document.createElement('button');b.type='button';b.className='layers-button';b.title='Map layers';b.setAttribute('aria-label','Map layers');b.setAttribute('aria-expanded','false');b.innerHTML=LAYERS_ICON;
   const panel=document.createElement('div');panel.className='layers-panel';panel.hidden=true;panel.setAttribute('role','group');panel.setAttribute('aria-label','Map layers');
-  panel.innerHTML='<div class="layers-title">Base map</div><div class="layers-base" role="radiogroup"><button type="button" data-base="streets" role="radio">Streets</button><button type="button" data-base="aerial" role="radio">Aerial</button></div><div class="layers-title">Show</div>'+[['water','Flood water'],['zones','Affected zones'],['buildings','3D buildings'],['routes','Evacuation routes']].map(([k,t])=>`<label><input type="checkbox" data-pref="${k}">${t}</label>`).join('')+'<p class="layers-note" data-note></p>';
+  panel.innerHTML='<div class="layers-title">Base map</div><div class="layers-base" role="radiogroup"><button type="button" data-base="streets" role="radio">Streets</button><button type="button" data-base="aerial" role="radio">Aerial</button></div><div class="layers-title">Show</div>'+[['water','Flood water'],['zones','Affected zones'],['buildings','3D buildings'],['routes','Evacuation routes'],['vexcel','Vexcel buildings (Houston)']].map(([k,t])=>`<label><input type="checkbox" data-pref="${k}">${t}</label>`).join('')+'<p class="layers-note" data-note></p>';
   b.onclick=()=>{panel.hidden=!panel.hidden;b.setAttribute('aria-expanded',String(!panel.hidden));this.sync();};
   panel.addEventListener('click',e=>{const base=e.target.closest('[data-base]')?.dataset.base;if(base)this.rm.setPrefs({base});});
   panel.addEventListener('change',e=>{const k=e.target.dataset.pref;if(k)this.rm.setPrefs({[k]:e.target.checked});});
   el.append(b,panel);this.el=el;this.panel=panel;this.button=b;this.sync();return el;
  }
- sync(){if(!this.panel)return;const p=this.rm.prefs;for(const x of this.panel.querySelectorAll('[data-base]'))x.setAttribute('aria-checked',String(x.dataset.base===p.base));for(const x of this.panel.querySelectorAll('[data-pref]'))x.checked=!!p[x.dataset.pref];const s=this.rm.state?.scenario;this.panel.querySelector('[data-note]').textContent=p.base==='aerial'?(s&&s.id!=='rasuwa'?AERIAL.usgs.attribution:AERIAL.esri.attribution):'';}
+ sync(){if(!this.panel)return;const p=this.rm.prefs;for(const x of this.panel.querySelectorAll('[data-base]'))x.setAttribute('aria-checked',String(x.dataset.base===p.base));for(const x of this.panel.querySelectorAll('[data-pref]'))x.checked=!!p[x.dataset.pref];const s=this.rm.state?.scenario;this.panel.querySelector('[data-note]').textContent=[p.base==='aerial'?(s&&s.id!=='rasuwa'?VEXCEL_ATTRIBUTION+' (zoom in past city level to see it)':'Vexcel has no aerial imagery of Rasuwa, Nepal: street map shown.'):'',p.vexcel&&s?.raster&&s.id.startsWith('houston')?'Building footprints and ground elevation © Vexcel Imaging US, Inc. Colour = flood depth at the building once the drill starts.':''].filter(Boolean).join(' · ');}
  onRemove(){}
 }
 
 // Everything the simulation draws. Hidden while the flood depth map is open.
-const SCENE_LAYERS=['buildings-3d','zone-fill','zone-edge','warning-zone','hazard-fill','hazard-edge','flood-zones','drill-zones','flow-line','flow-arrows','route-shadow','route-line'];
+const SCENE_LAYERS=['buildings-3d','vexcel-buildings','zone-fill','zone-edge','warning-zone','hazard-fill','hazard-edge','flood-zones','drill-zones','flow-line','flow-arrows','route-shadow','route-line'];
 // Drawn only once the simulation has started.
 const AFTER_START=['zone-fill','zone-edge','flood-zones','drill-zones','flow-line','flow-arrows'];
 
@@ -52,13 +55,26 @@ export class ResponseMap{
   this.map.addControl(new maplibre.NavigationControl({visualizePitch:true}),'top-right');
   this.floodControl=new FloodMapControl(()=>this.setFloodMap(!this.floodMode));this.map.addControl(this.floodControl,'top-right');if(!compact){this.layersControl=new LayersControl(this);this.map.addControl(this.layersControl,'top-right');}
   this.map.on('click',e=>{if(this.floodMode)this.depthPopup(e.lngLat);});
+  this.map.on('click','vexcel-buildings',e=>{const p=e.features?.[0]?.properties;if(!p||this.floodMode)return;const ft=m=>(m*3.28084).toFixed(0)+' ft',zone={high:'Red · over 3 ft',medium:'Yellow · 1–3 ft',low:'Green · under 1 ft',dry:'Outside the flood'}[p.zone];
+   const el=document.createElement('div');el.className='vexcel-popup';el.innerHTML=`<strong></strong><div>Flood at building: <b></b></div><div>Ground (Vexcel / USGS 3DEP): <span></span></div><div class="muted">If the floor sits at Vexcel's ground level: <span></span></div><div class="vexcel-views" role="group" aria-label="Viewing direction"></div><a class="vexcel-photo" target="_blank" rel="noopener"><img alt="Vexcel aerial photo of the building"></a><div class="muted vexcel-status">Bird's-eye photo · © Vexcel Imaging US, Inc.</div>`;
+   const [t,b,g,pad]=el.querySelectorAll('strong,b,span');t.textContent=(p.type?String(p.type).replace(/_/g,' ').replace(/^./,c=>c.toUpperCase()):'Building')+' · '+Math.round(p.areaM2||0)+' m²';b.textContent=(+p.gridDepthFt).toFixed(1)+' ft · '+zone;g.textContent=ft(p.vexcelGroundM)+' / '+ft(p.dep3GroundM);pad.textContent=p.padDepthFt!=null?(+p.padDepthFt).toFixed(1)+' ft':'dry';
+   // Bird's-eye photos: angled aerial views from four sides (walls, doors, windows) plus straight down.
+   const views=el.querySelector('.vexcel-views'),img=el.querySelector('img'),link=el.querySelector('.vexcel-photo'),status=el.querySelector('.vexcel-status'),{lng,lat}=e.lngLat;
+   const show=v=>{const src=`/api/demo/vexcel-photo?lon=${lng.toFixed(6)}&lat=${lat.toFixed(6)}&view=${v}`;status.textContent='Loading Vexcel photo…';img.src=src+'&size=480';link.href=src+'&size=1024';for(const x of views.children)x.setAttribute('aria-pressed',String(x.dataset.view===v));};
+   for(const [v,label] of [['north','Looking N'],['east','E'],['south','S'],['west','W'],['ortho','Top']]){const btn=document.createElement('button');btn.type='button';btn.dataset.view=v;btn.textContent=label;btn.onclick=()=>show(v);views.append(btn);}
+   img.onload=()=>{status.textContent="Bird's-eye photo · © Vexcel Imaging US, Inc.";};img.onerror=()=>{status.textContent='No Vexcel photo for this view.';};show('north');
+   new maplibre.Popup({maxWidth:'500px',className:'vexcel-popup-wrap'}).setLngLat(e.lngLat).setDOMContent(el).addTo(this.map);});
+  this.map.on('mouseenter','vexcel-buildings',()=>{this.map.getCanvas().style.cursor='pointer';});this.map.on('mouseleave','vexcel-buildings',()=>{this.map.getCanvas().style.cursor='';});
   this.map.on('load',async()=>{try{
    const tiles=await fetch('/data/terrain-tiles.json').then(r=>r.json());
    this.map.addSource('valley-dem',{type:'raster-dem',tiles:tiles.tiles.map(t=>location.origin+t),tileSize:256,minzoom:12,maxzoom:12,encoding:'terrarium',bounds:tiles.bounds,attribution:'Elevation: Mapzen / SRTM'});
    this.map.addSource('houston-dem',{type:'raster-dem',tiles:['https://s3.amazonaws.com/elevation-tiles-prod/terrarium/{z}/{x}/{y}.png'],tileSize:256,maxzoom:15,encoding:'terrarium',attribution:'Elevation: AWS Terrain Tiles (USGS 3DEP)'});
    const label=this.label=this.map.getStyle().layers.find(l=>l.type==='symbol')?.id;
-   for(const [k,a] of Object.entries(AERIAL)){this.map.addSource('aerial-'+k,{type:'raster',tiles:a.tiles,tileSize:256,maxzoom:a.maxzoom,attribution:a.attribution});this.map.addLayer({id:'aerial-'+k,type:'raster',source:'aerial-'+k,layout:{visibility:'none'},paint:{'raster-fade-duration':150}},label);}
+   for(const [k,a] of Object.entries(AERIAL)){this.map.addSource('aerial-'+k,{type:'raster',tiles:[location.origin+'/api/demo/vexcel-tile/{z}/{x}/{y}'],tileSize:512,minzoom:11,maxzoom:20,bounds:a.bounds,attribution:VEXCEL_ATTRIBUTION});this.map.addLayer({id:'aerial-'+k,type:'raster',source:'aerial-'+k,layout:{visibility:'none'},paint:{'raster-fade-duration':150}},label);}
    if(!compact)this.map.addLayer({id:'buildings-3d',type:'fill-extrusion',source:'openmaptiles','source-layer':'building',minzoom:13,paint:{'fill-extrusion-color':'#98a6a7','fill-extrusion-height':['max',5,['to-number',['get','render_height'],5]],'fill-extrusion-opacity':.86}},label);
+   // Vexcel building footprints (scripts/vexcel-houston.py), coloured by the drill's depth at each building.
+   this.map.addSource('vexcel',{type:'geojson',data:empty(),attribution:'Buildings © Vexcel Imaging US, Inc.'});
+   if(!compact)this.map.addLayer({id:'vexcel-buildings',type:'fill-extrusion',source:'vexcel',minzoom:12,layout:{visibility:'none'},paint:{'fill-extrusion-color':['match',['get','zone'],'high','#d64541','medium','#f2c12e','low','#3fae5a','#b9c2c4'],'fill-extrusion-height':['coalesce',['get','heightM'],6],'fill-extrusion-opacity':.88}});
    for(const id of ['hazard','warning','routes','zones','arrows'])this.map.addSource(id,{type:'geojson',data:empty()});
    const zoneColor=['match',['get','zone'],'red','#df5149','yellow','#e6b544','#3ba684'];
    this.map.addLayer({id:'zone-fill',type:'fill',source:'zones',layout:{visibility:'none'},paint:{'fill-color':zoneColor,'fill-opacity':['match',['get','zone'],'high',.2,'medium',.15,.12]}},label);
@@ -78,6 +94,10 @@ export class ResponseMap{
  }
 
  /** Show or hide a layer. While the depth map is open, remember the wish and apply it on close. */
+ /** Vexcel footprints for the current Houston drill (Princeton and Rasuwa have none). */
+ loadVexcel(s){const key=s?.raster&&s.id.startsWith('houston')?s.raster.key:null;if(key===this.vexcelKey)return;this.vexcelKey=key;this.vexcelHas=false;this.map.getSource('vexcel')?.setData(empty());if(key)fetch(`/data/vexcel/houston-${key}.geojson`).then(r=>r.ok?r.json():null).then(d=>{if(d&&this.vexcelKey===key){this.map.getSource('vexcel')?.setData(d);this.vexcelHas=true;this.showVexcel();}}).catch(()=>{});}
+ vexcelOn(){return !!(this.prefs.vexcel&&this.vexcelHas&&this.state?.mode&&this.state.mode!=='ready');}
+ showVexcel(){if(!this.loaded||this.compact)return;const on=this.vexcelOn();this.setVisible('vexcel-buildings',on);this.setVisible('buildings-3d',this.view==='3d'&&!on);}
  setVisible(id,on){if(!this.map.getLayer(id))return;if(PREF_OF[id]&&!this.prefs[PREF_OF[id]])on=false;const v=on?'visible':'none';if(this.floodMode){this.hidden.set(id,v);return;}if(this.map.getLayoutProperty(id,'visibility')!==v)this.map.setLayoutProperty(id,'visibility',v);}
 
  /** Apply the Layers panel: base map and which overlays show. Saved in this browser. */
@@ -85,8 +105,8 @@ export class ResponseMap{
   Object.assign(this.prefs,change);try{localStorage.setItem(PREF_KEY,JSON.stringify(this.prefs));}catch{}
   if(this.loaded){
    const s=this.state?.scenario,us=s&&s.id!=='rasuwa',aerial=this.prefs.base==='aerial';
-   this.setVisible('aerial-usgs',aerial&&us);this.setVisible('aerial-esri',aerial&&!us);
-   this.setVisible('buildings-3d',!this.compact&&this.view==='3d');for(const id of ['route-shadow','route-line'])this.setVisible(id,true);
+   for(const k of Object.keys(AERIAL))this.setVisible('aerial-'+k,aerial&&us);
+   this.setVisible('buildings-3d',!this.compact&&this.view==='3d'&&!this.vexcelOn());for(const id of ['route-shadow','route-line'])this.setVisible(id,true);this.showVexcel();
    if(this.state)this.update(this.state);this.lastT=null;
   }
   this.layersControl?.sync();
@@ -163,7 +183,7 @@ export class ResponseMap{
   requestAnimationFrame(frame);
  }
 
- setView(view){if(!['street','terrain','3d'].includes(view))return;this.view=view;if(!this.loaded)return;this.applyTerrain(this.state?.scenario);this.setVisible('buildings-3d',view==='3d'&&!this.compact&&this.prefs.buildings);this.setVisible('valley-relief',view==='terrain'&&this.scenario==='rasuwa');this.setVisible('houston-relief',view==='terrain'&&!!this.scenario&&this.scenario!=='rasuwa');this.map.easeTo({pitch:view==='street'?0:58,bearing:view==='street'?0:-18,duration:650});this.waterLayer?.refresh();document.getElementById(this.container).dataset.view=view;}
+ setView(view){if(!['street','terrain','3d'].includes(view))return;this.view=view;if(!this.loaded)return;this.applyTerrain(this.state?.scenario);this.setVisible('buildings-3d',view==='3d'&&!this.compact&&this.prefs.buildings&&!this.vexcelOn());this.setVisible('valley-relief',view==='terrain'&&this.scenario==='rasuwa');this.setVisible('houston-relief',view==='terrain'&&!!this.scenario&&this.scenario!=='rasuwa');this.map.easeTo({pitch:view==='street'?0:58,bearing:view==='street'?0:-18,duration:650});this.waterLayer?.refresh();document.getElementById(this.container).dataset.view=view;}
 
  applyTerrain(s){
   if(this.compact||this.view==='street'||this.floodMode||!s){this.map.setTerrain(null);return;}
@@ -181,9 +201,11 @@ export class ResponseMap{
    this.map.getSource('arrows').setData(s.arrows||empty());
    if(s.raster)this.rasterLayers(s.raster).catch(()=>{});else this.clearBands();
    if(this.prefs.base==='aerial')queueMicrotask(()=>this.setPrefs());
+   this.loadVexcel(s);
    if(this.floodControl.el)this.floodControl.el.hidden=!s.id.startsWith('houston');
    if(this.floodMode&&!s.id.startsWith('houston'))this.setFloodMap(false);
   }
+  this.showVexcel(started);
   for(const id of AFTER_START)this.setVisible(id,started&&(id==='flood-zones'?!!s.raster&&!this.isBandDrill(s.raster):id==='drill-zones'?this.isBandDrill(s.raster):!s.raster));
   this.map.getSource('hazard').setData(empty());this.map.getSource('warning').setData(s.raster?empty():state.warning||empty());
   if(s.raster&&!this.isBandDrill(s.raster))this.paintZones();const paths=[],activeDestinations=new Set();

@@ -17,3 +17,26 @@ Matterport SDK (Princeton, dashboard on localhost): the building panel runs the 
 Map layers: the layers button under the flood-map button switches the base map between Streets and Aerial (USGS National Map imagery in the US, Esri World Imagery for Rasuwa) and toggles flood water, affected zones, 3D buildings and evacuation routes in every scenario. Choices are remembered in the browser.
 
 Arrival times, routes, movement speeds and refuge viability are exercise assumptions. The historical Houston footprint and estimated-depth data do not establish a calibrated flood forecast or an approved real-world refuge.
+
+Vexcel buildings (Houston): open Map layers → tick "Vexcel buildings (Houston)". After Start, real Vexcel footprints show coloured by flood depth. Click one to see its depth and ground elevation, plus bird's-eye photos from the north, east, south and west, or from straight down (Top). To rebuild the footprints: `set -a; . ./.env; set +a; python3 -I scripts/vexcel-houston.py`.
+
+## Two-way voice agent (ElevenLabs)
+
+The warning call is one-way, so the phone also offers **Talk to SafeWay**: a two-way voice conversation with an ElevenLabs agent ("SafeWay Flood Responder"). It appears on the phone for the whole drill, and as **Talk back to SafeWay** on the incoming-call screen.
+
+- **Flood questions:** the `get_flood_status` tool returns the caller's live zone, when the water arrives, what to do, where to go, and (at Princeton) how far below the building the water is.
+- **Getting out:** the `get_evacuation_route` tool.
+  - **Princeton:** the agent first asks for the floor and the room or sign the caller can see. It then gives the way out one step at a time: the hallway, Stairway 7 (with the walking distance from the Matterport scan), stairs not the elevator, the Shapiro Walk entrance, then west to the assembly point.
+  - **When the route changes:** if the stair is blocked or the water has reached the building, it switches to "go up to Level 3, don't go down" and tells the caller to report being trapped.
+  - **Houston:** it gives the route to the assembly point, or shelter-in-place advice if the route was withdrawn.
+- **Trapped:** the `report_trapped` tool sends the floor, location, number of people, injuries, water level and whether they can move. This becomes a rescue request: the responder sees **TRAPPED · VOICE REPORT** with the details, and the dashboard flags it.
+
+The tools run in the phone's browser as ElevenLabs client tools and call this server (`/api/demo/voice/tool`), so the drill can stay on localhost. The phone gets a short-lived signed session URL from `/api/demo/voice/session`; the ElevenLabs key never reaches a browser. The agent requires sign-in, so only our server can start sessions. The phone needs HTTPS for the microphone (use the `https://…:8443/phone` links).
+
+Setup, once:
+
+    node scripts/voice-setup.mjs                                        # bundle the ElevenLabs browser client
+    node --env-file=.env scripts/rabinowitz-building.mjs                # building guide from the Matterport scan
+    node --env-file=.env scripts/elevenlabs-agent.mjs                   # create/update the agent, saves HEADWATER_VOICE_AGENT_ID
+
+`.env` needs `ELEVENLABS_API_KEY` and the Matterport token. The team's existing "Evacuation Guide" agent is not changed. Its "Julis Romo Rabinowitz Building" document is attached to the SafeWay agent for search (RAG), alongside a generated "SafeWay flood drill guide" document.
