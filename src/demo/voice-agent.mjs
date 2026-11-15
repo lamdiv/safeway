@@ -15,7 +15,7 @@ export function buildingGuide(){guideCache??=JSON.parse(readFileSync(new URL('pu
 
 const isPrinceton=state=>state.scenario?.id==='princeton';
 const minutes=s=>s==null?null:s<90?Math.max(1,Math.round(s))+' seconds':Math.round(s/60)+' minutes';
-const ZONE={red:'red (deep water expected, over 3 ft)',yellow:'yellow (1 to 3 ft expected)',green:'green (under 1 ft, edge of the flood)',outside:'outside the mapped flood'};
+const ZONE={red:'red (deep water expected, over 3 ft)',yellow:'yellow (1 to 3 ft expected)',green:'green (outside modeled inundation; monitor updates)',outside:'outside the mapped flood'};
 
 /** Water at the building (Princeton): how far below the building the rising drill water is, in feet. */
 function buildingWater(state){
