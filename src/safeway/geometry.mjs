@@ -1,0 +1,7 @@
+import {inPolygon} from '../analysis.mjs';
+export function validPoint(p){return Array.isArray(p)&&p.length===2&&p.every(Number.isFinite)&&Math.abs(p[0])<=180&&Math.abs(p[1])<=90;}
+const cross=(a,b,c)=>(b[0]-a[0])*(c[1]-a[1])-(b[1]-a[1])*(c[0]-a[0]);
+const on=(a,b,p)=>Math.abs(cross(a,b,p))<1e-12&&p[0]>=Math.min(a[0],b[0])-1e-12&&p[0]<=Math.max(a[0],b[0])+1e-12&&p[1]>=Math.min(a[1],b[1])-1e-12&&p[1]<=Math.max(a[1],b[1])+1e-12;
+export function segmentsIntersect(a,b,c,d){const x=cross(a,b,c),y=cross(a,b,d),z=cross(c,d,a),w=cross(c,d,b);return (x*y<0&&z*w<0)||on(a,b,c)||on(a,b,d)||on(c,d,a)||on(c,d,b);}
+export function lineIntersects(line,polygon){if(line?.type!=='LineString'||polygon?.type!=='Polygon'||!Array.isArray(line.coordinates)||line.coordinates.length<2||!Array.isArray(polygon.coordinates)||!polygon.coordinates.length||polygon.coordinates.some(r=>r.length<4||r[0][0]!==r.at(-1)[0]||r[0][1]!==r.at(-1)[1])||!line.coordinates.every(validPoint)||!polygon.coordinates.flat().every(validPoint))throw new Error('Valid WGS84 LineString and Polygon required');if(line.coordinates.some(p=>inPolygon(p,polygon.coordinates)))return true;for(let i=1;i<line.coordinates.length;i++)for(const ring of polygon.coordinates)for(let j=1;j<ring.length;j++)if(segmentsIntersect(line.coordinates[i-1],line.coordinates[i],ring[j-1],ring[j]))return true;return false;}
+export const pointInside=(p,poly)=>validPoint(p)&&inPolygon(p,poly.coordinates);
