@@ -1,0 +1,92 @@
+{
+ "name": "Harris County flood depth",
+ "bounds": [
+  -95.9765625,
+  29.38217507514529,
+  -94.74609375000001,
+  30.29701788337205
+ ],
+ "minzoom": 9,
+ "maxzoom": 13,
+ "tile": 256,
+ "levels": [
+  {
+   "level": 1,
+   "minFt": 0,
+   "maxFt": 1,
+   "color": "#cfe9f6"
+  },
+  {
+   "level": 2,
+   "minFt": 1,
+   "maxFt": 2,
+   "color": "#a3d3ee"
+  },
+  {
+   "level": 3,
+   "minFt": 2,
+   "maxFt": 3,
+   "color": "#72b9e3"
+  },
+  {
+   "level": 4,
+   "minFt": 3,
+   "maxFt": 4,
+   "color": "#4799d3"
+  },
+  {
+   "level": 5,
+   "minFt": 4,
+   "maxFt": 5,
+   "color": "#2b79bf"
+  },
+  {
+   "level": 6,
+   "minFt": 5,
+   "maxFt": 6,
+   "color": "#1d58a2"
+  },
+  {
+   "level": 7,
+   "minFt": 6,
+   "maxFt": null,
+   "color": "#123a78"
+  }
+ ],
+ "events": {
+  "100": {
+   "label": "100-year flood (1% annual chance)",
+   "floodedKm2": 1170.7,
+   "areaKm2ByLevel": {
+    "1": 503.3,
+    "2": 132.9,
+    "3": 87.6,
+    "4": 58.7,
+    "5": 46.2,
+    "6": 40.6,
+    "7": 301.4
+   }
+  },
+  "500": {
+   "label": "500-year flood (0.2% annual chance)",
+   "floodedKm2": 1690.0,
+   "areaKm2ByLevel": {
+    "1": 802.1,
+    "2": 192.8,
+    "3": 124.8,
+    "4": 82.6,
+    "5": 60.2,
+    "6": 48.3,
+    "7": 379.2
+   }
+  }
+ },
+ "sources": [
+  "FEMA National Flood Hazard Layer, Harris County DFIRM 48201C (floodway, 1% and 0.2% annual-chance areas)",
+  "USGS 3D Elevation Program (3DEP) bare-earth elevation"
+ ],
+ "method": "FwDET (Cohen et al. 2018): water surface from the ground elevation at the nearest edge of the FEMA flood extent, smoothed over ~115 m, minus ground elevation. Grid ~16.6 m.",
+ "caveat": "Estimated depth for awareness and exercises, not FEMA or HCFCD modelled depth. Channels read deep because the bed is far below the banks.",
+ "generatedAt": "2026-11-15T08:01:30+00:00",
+ "noDataKm2": 106.0
+}

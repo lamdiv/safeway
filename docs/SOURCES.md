@@ -37,3 +37,15 @@ SafeWay's synthetic property/geometry/evidence are authored fixture data. No Nep
 
 - OpenFreeMap vector styles/tiles: https://openfreemap.org/quick_start/ (OSM/OpenMapTiles attribution displayed on maps). Building heights are derived OSM values or a labelled display fallback, not surveyed verification.
 - AWS/Mapzen Terrarium elevation tiles: https://registry.opendata.aws/terrain-tiles/ . DEM observations are not current water surfaces and do not resolve drainage or building floors. The scenario makes a relative assumed-level assessment only.
+
+## Houston floods (live-response demo)
+
+Built by `scripts/houston-floods.py` into `public/data/floods/<harvey|downtown|brays>/` (raw downloads go to `data/raw/`, git-ignored).
+
+- Hurricane Harvey (historical, Kingwood / Lake Houston): FEMA Hurricane Harvey inundation boundaries for Harris County, built from HCFCD/USGS high-water marks (`Harris_AOIandBoundaries.zip`), archived on HydroShare, doi:10.4211/hs.e8768f4cb4d5478a96d2b1cbd00d9e85, CC BY 4.0.
+- Downtown and Brays Bayou flash floods (hypothetical): FEMA National Flood Hazard Layer, Harris County DFIRM 48201C, read through Esri's public mirror (https://services.arcgis.com/P3ePLMYs2RVChkJx/arcgis/rest/services/USA_Flood_Hazard_Reduced_Set_gdb/FeatureServer/0). Downtown uses the 0.2% (500-year) area. Brays uses the 1% (100-year) area, because the 0.2% area there covers almost the whole window.
+- Ground elevation: USGS 3D Elevation Program (3DEP) bare-earth, 5 m (https://elevation.nationalmap.gov/arcgis/rest/services/3DEPElevation/ImageServer).
+- Depth: FwDET (Cohen et al. 2018). Water surface is the ground elevation at the nearest edge of the flood outline, smoothed, minus the ground. An estimate, not a surveyed or official depth grid. The rising-water order (deepest first) is a simulation device, not a forecast of arrival times.
+- Residents and assembly points are exercise inventions placed by the script: one resident each in water over 3 ft, 1–3 ft and under 1 ft; assembly points are dry and at least ~150 m from the flood.
+- Harris County flood depth map (Flood map button): `scripts/houston-county-flood.py` builds XYZ tiles in `public/data/county-flood/` (z9–z13, ~19 MB) from all FEMA NFHL flood zones in Harris County DFIRM 48201C (floodway, 1% and 0.2% annual-chance areas, via the Esri mirror above) and USGS 3DEP elevation on a ~16.6 m grid aligned to zoom-13 tiles, with FwDET depth. 3DEP no-data cells over open water are excluded. HCFCD's modelled MAAPnext depth grids (https://fximgservices.hcfcd.org/arcgis/rest/services/MAAPNext/Depth_100YR/ImageServer, also 10YR and 500YR) would be a better source; the server returned HTTP 522 when this was built.
+- Houston 3D terrain: AWS Terrain Tiles (Terrarium encoding, https://s3.amazonaws.com/elevation-tiles-prod/terrarium/{z}/{x}/{y}.png), which use USGS 3DEP in the US. Shown with 4× vertical exaggeration.

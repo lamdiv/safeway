@@ -1,0 +1,160 @@
+{
+ "id": "harvey",
+ "bounds": [
+  [
+   -95.235,
+   30.069999999999986
+  ],
+  [
+   -95.16999999999999,
+   30.069999999999986
+  ],
+  [
+   -95.16999999999999,
+   30.025000000000016
+  ],
+  [
+   -95.235,
+   30.025000000000016
+  ]
+ ],
+ "size": [
+  1446,
+  1158
+ ],
+ "resolutionM": 5,
+ "thresholdsFt": [
+  12,
+  9,
+  7,
+  5.5,
+  4.5,
+  3.5,
+  2.7,
+  2.0,
+  1.4,
+  0.9,
+  0.5,
+  0.0
+ ],
+ "levels": [
+  {
+   "level": 1,
+   "minFt": 0,
+   "maxFt": 1,
+   "color": "#cfe9f6"
+  },
+  {
+   "level": 2,
+   "minFt": 1,
+   "maxFt": 2,
+   "color": "#a3d3ee"
+  },
+  {
+   "level": 3,
+   "minFt": 2,
+   "maxFt": 3,
+   "color": "#72b9e3"
+  },
+  {
+   "level": 4,
+   "minFt": 3,
+   "maxFt": 4,
+   "color": "#4799d3"
+  },
+  {
+   "level": 5,
+   "minFt": 4,
+   "maxFt": 5,
+   "color": "#2b79bf"
+  },
+  {
+   "level": 6,
+   "minFt": 5,
+   "maxFt": 6,
+   "color": "#1d58a2"
+  },
+  {
+   "level": 7,
+   "minFt": 6,
+   "maxFt": null,
+   "color": "#123a78"
+  }
+ ],
+ "zones": [
+  {
+   "zone": "high",
+   "minFt": 3,
+   "maxFt": null,
+   "color": "#d9483b"
+  },
+  {
+   "zone": "medium",
+   "minFt": 1,
+   "maxFt": 3,
+   "color": "#ee9a35"
+  },
+  {
+   "zone": "low",
+   "minFt": 0,
+   "maxFt": 1,
+   "color": "#e8c547"
+  }
+ ],
+ "areaKm2": {
+  "flooded": 14.89,
+  "high": 11.65,
+  "medium": 1.95,
+  "low": 1.29
+ },
+ "areaKm2ByLevel": {
+  "1": 1.295,
+  "2": 0.886,
+  "3": 1.063,
+  "4": 1.103,
+  "5": 1.027,
+  "6": 1.004,
+  "7": 8.511
+ },
+ "medianDepthFt": 7.0,
+ "people": [
+  {
+   "start": [
+    -95.202522,
+    30.047483
+   ],
+   "destination": [
+    -95.199601,
+    30.050164
+   ],
+   "depthFt": 4.0
+  },
+  {
+   "start": [
+    -95.197218,
+    30.046628
+   ],
+   "destination": [
+    -95.197803,
+    30.049271
+   ],
+   "depthFt": 1.2
+  },
+  {
+   "start": [
+    -95.202253,
+    30.04282
+   ],
+   "destination": [
+    -95.198027,
+    30.049465
+   ],
+   "depthFt": 0.7
+  }
+ ],
+ "extent": {
+  "dataset": "FEMA Hurricane Harvey inundation boundaries, Harris County (NAD83)"
+ },
+ "method": "FwDET (Cohen et al. 2018): water surface from the ground elevation at the nearest edge of the flood extent, smoothed (75 m, or 500 m on the broad Brays floodplain), minus USGS 3DEP 5 m bare-earth elevation.",
+ "generatedAt": "2026-11-15T08:20:31+00:00"
+}

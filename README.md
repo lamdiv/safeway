@@ -1,6 +1,6 @@
 # SafeWay
 
-A local disaster-response demo with two scenarios: **Rasuwa flood** and **Houston fire**.
+A local disaster-response demo with two scenarios: **Rasuwa flood** and **Houston flood**. Houston has three fully mapped floods in different parts of the city: **Hurricane Harvey (August 2017)** in Kingwood and Lake Houston (historical), a **downtown flash flood** on Buffalo and White Oak Bayous, and a **Brays Bayou flash flood** in Meyerland (both hypothetical). Each shows water rising by estimated depth, highly, moderately and lightly affected zones (over 3 ft, 1–3 ft, under 1 ft), and risks with mitigations. Nothing about the flood is drawn until you press Start. The wave button by the map controls opens a county-wide Harris County flood depth map (levels 1–7, 100-year or 500-year floodplain).
 
 Start the simulation. The hazard expands across the 3D map, people inside its warning area are identified, and connected warning phones ring automatically. Answering establishes an actual WebRTC audio connection carrying a spoken destination and a three-minute drill instruction. The resident can acknowledge, share simulated route progress, send SOS, and stop sharing. A separate responder device follows progress and acknowledges SOS requests. Real device GPS is optional, separately consented, and labelled separately from simulated movement.
 
@@ -15,7 +15,7 @@ Open `http://localhost:4173/` on the host computer. The launcher also starts a l
 
 On each device, open its private URL, accept the local certificate warning, and tap **Connect** once. Keep the pages open. Use the same reachable Wi-Fi or personal hotspot. The dashboard must remain open: it is the WebRTC voice caller. No microphone is requested; the message is streamed as audio into the peer connection. This is an in-browser ringing call, not a background/native phone-network call. A network that isolates clients or blocks peer traffic needs a different LAN/hotspot or a TURN relay; no external relay is configured.
 
-Then choose **Rasuwa / Flood** or **Houston / Fire** and press **Start simulation**. There is one Start/Pause/Resume control and one Reset control. No public feed loading, sponsor setup, water sliders or second workflow is needed for this demo.
+Then choose **Rasuwa / Flood** or **Houston / Flood** and press **Start simulation**. There is one Start/Pause/Resume control and one Reset control. No public feed loading, sponsor setup, water sliders or second workflow is needed for this demo.
 
 ## Device API
 
@@ -34,7 +34,7 @@ Locations, sessions, calls and SOS are held in memory. Reset invalidates previou
 
 ## Scope
 
-Both hazards, people, destinations, time-to-leave and route movement are authored **simulations**, not current disasters, calibrated forecasts or verified public evacuation instructions. The flood front follows the cached Rasuwa terrain drainage path; the fire follows an authored wind-biased expanding ellipse in Houston. The warning zone includes an exercise lead time and buffer. OSM streets and derived building extrusions provide geographic context; missing building heights use a display fallback. Nepal relief uses cached Mapzen/SRTM tiles at actual scale. Real GPS is not substituted for the resident's scenario position.
+Both hazards, people, destinations, time-to-leave and route movement are authored **simulations**, not current disasters, calibrated forecasts or verified public evacuation instructions. The flood front follows the cached Rasuwa terrain drainage path; the Houston floods come from mapped flood outlines (FEMA’s Harvey inundation boundary; FEMA flood zones for the two hypothetical floods) with depth estimated from USGS elevation (`scripts/houston-floods.py`). The warning zone includes an exercise lead time and buffer. OSM streets and derived building extrusions provide geographic context; missing building heights use a display fallback. Nepal relief uses cached Mapzen/SRTM tiles at actual scale. Real GPS is not substituted for the resident's scenario position.
 
 Warnings are actual WebRTC voice messages, generated locally from authored drill text. No real phone-number calls, SMS, public emergency dispatch, external AI request or hosted deployment is needed. Previous monitoring/sponsor functionality remains in the repository for reference, outside the new default experience. Main is preserved; changes are on `safeway`.
 

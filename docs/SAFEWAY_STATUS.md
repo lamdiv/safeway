@@ -1,12 +1,12 @@
 # Current demo status
 
-The default experience is now the focused Rasuwa flood / Houston fire response simulation requested by the user. It replaces the source-loading and scenario-slider dashboard.
+The default experience is now the focused Rasuwa flood / Houston flood response simulation requested by the user. It replaces the source-loading and scenario-slider dashboard.
 
-Implemented: 3D OSM map, terrain-following valley corridor display, wind-biased fire spread, pre-impact warning zones, deterministic person exposure, automatic per-device warning calls, actual WebRTC voice transmission, in-browser ring/answer/end, destination and three-minute drill instruction, acknowledgement, simulated route movement, opt-in live device GPS, responder tracking, SOS and acknowledgement, Stop Sharing, pause/reset and stale-call isolation. Device URLs are private local files and are not shown in the dashboard.
+Implemented: 3D OSM map, terrain-following valley corridor display, three fully mapped Houston floods (Hurricane Harvey 2017 plus two hypothetical flash floods) with affected zones and mitigation guidance, flood overlays hidden until Start, pre-impact warning zones, deterministic person exposure, automatic per-device warning calls, actual WebRTC voice transmission, in-browser ring/answer/end, destination and three-minute drill instruction, acknowledgement, simulated route movement, opt-in live device GPS, responder tracking, SOS and acknowledgement, Stop Sharing, pause/reset and stale-call isolation. Device URLs are private local files and are not shown in the dashboard.
 
 The launcher provides localhost HTTP plus LAN HTTPS over shared application state, with a locally generated certificate. Phone pages need a Connect tap and must stay open. Native background calling and blocked/isolated guest-network traversal are not claimed; no TURN relay or real telephony provider is configured.
 
-All hazard progression, people, routes, destinations and timing are authored exercises. The Rasuwa corridor follows the cached terrain profile; Houston fire uses an illustrative wind-biased ellipse. Neither is a calibrated hydraulic/fire solver or a public emergency instruction.
+All hazard progression, people, routes, destinations and timing are authored exercises. The Rasuwa corridor follows the cached terrain profile; Houston floods use mapped flood outlines with estimated depth (FwDET on USGS elevation). Neither is a calibrated hydraulic solver or a public emergency instruction.
 
 Real GPS is separately consented and labelled, never moved into Nepal/Houston or used as an exercise resident's physical location. Stop Sharing removes it and rejects further uploads. Active resident data is in memory and is cleared on restart.
 
