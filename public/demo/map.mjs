@@ -23,27 +23,27 @@ const LAYERS_ICON='<svg viewBox="0 0 24 24" width="18" height="18" fill="none" s
 // Vexcel covers the Houston and Princeton drills; Rasuwa (Nepal) has no Vexcel imagery, so it keeps the street map.
 const VEXCEL_ATTRIBUTION='Imagery © Vexcel Imaging US, Inc.';
 const AERIAL={houston:{bounds:[-96.0,29.4,-94.8,30.3]},princeton:{bounds:[-74.80,40.25,-74.50,40.45]}};
-const PREF_KEY='safeway-map-layers',DEFAULT_PREFS={base:'streets',water:true,zones:true,buildings:true,routes:true,vexcel:false};
+const PREF_KEY='safeway-map-layers',DEFAULT_PREFS={base:'streets',water:true,zones:true,buildings:true,routes:true,vexcel:false,sentinel:false};
 // Which user switch controls which map layers.
-const PREF_OF={'buildings-3d':'buildings','flood-zones':'zones','drill-zones':'zones','zone-fill':'zones','zone-edge':'zones','hazard-fill':'water','hazard-edge':'water','warning-zone':'water','route-shadow':'routes','route-line':'routes','vexcel-buildings':'vexcel'};
+const PREF_OF={'buildings-3d':'buildings','flood-zones':'zones','drill-zones':'zones','zone-fill':'zones','zone-edge':'zones','hazard-fill':'water','hazard-edge':'water','warning-zone':'water','route-shadow':'routes','route-line':'routes','vexcel-buildings':'vexcel','sentinel-1':'sentinel'};
 class LayersControl{
  constructor(map){this.rm=map;}
  onAdd(){
   const el=document.createElement('div');el.className='maplibregl-ctrl maplibregl-ctrl-group layers-ctrl';
   const b=document.createElement('button');b.type='button';b.className='layers-button';b.title='Map layers';b.setAttribute('aria-label','Map layers');b.setAttribute('aria-expanded','false');b.innerHTML=LAYERS_ICON;
   const panel=document.createElement('div');panel.className='layers-panel';panel.hidden=true;panel.setAttribute('role','group');panel.setAttribute('aria-label','Map layers');
-  panel.innerHTML='<div class="layers-title" data-base-title>Base map</div><div class="layers-base" role="radiogroup"><button type="button" data-base="streets" role="radio">Streets</button><button type="button" data-base="aerial" role="radio">Aerial</button></div><div class="layers-title">Show</div>'+[['water','Flood water'],['zones','Affected zones'],['buildings','3D buildings'],['routes','Evacuation routes'],['vexcel','Vexcel buildings']].map(([k,t])=>`<label><input type="checkbox" data-pref="${k}">${t}</label>`).join('')+'<p class="layers-note" data-note></p>';
+  panel.innerHTML='<div class="layers-title" data-base-title>Base map</div><div class="layers-base" role="radiogroup"><button type="button" data-base="streets" role="radio">Streets</button><button type="button" data-base="aerial" role="radio">Aerial</button></div><div class="layers-title">Show</div>'+[['water','Flood water'],['zones','Affected zones'],['buildings','3D buildings'],['routes','Evacuation routes'],['vexcel','Vexcel buildings'],['sentinel','Sentinel-1 radar · 30 Aug 2017']].map(([k,t])=>`<label><input type="checkbox" data-pref="${k}">${t}</label>`).join('')+'<p class="layers-note" data-note></p>';
   b.onclick=()=>{panel.hidden=!panel.hidden;b.setAttribute('aria-expanded',String(!panel.hidden));this.sync();};
   panel.addEventListener('click',e=>{const base=e.target.closest('[data-base]')?.dataset.base;if(base)this.rm.setPrefs({base});});
   panel.addEventListener('change',e=>{const k=e.target.dataset.pref;if(k)this.rm.setPrefs({[k]:e.target.checked});});
   el.append(b,panel);this.el=el;this.panel=panel;this.button=b;this.sync();return el;
  }
- sync(){if(!this.panel)return;const p=this.rm.prefs;for(const x of this.panel.querySelectorAll('[data-base]'))x.setAttribute('aria-checked',String(x.dataset.base===p.base));for(const x of this.panel.querySelectorAll('[data-pref]'))x.checked=!!p[x.dataset.pref];const s=this.rm.state?.scenario,houston=!!s?.id?.startsWith('houston'),rasuwa=s?.id==='rasuwa';this.panel.querySelector('[data-pref=vexcel]').closest('label').hidden=!houston;this.panel.querySelector('[data-base-title]').hidden=rasuwa;this.panel.querySelector('.layers-base').hidden=rasuwa;this.panel.querySelector('[data-note]').textContent=[p.base==='aerial'&&!rasuwa?VEXCEL_ATTRIBUTION:'',p.vexcel&&houston?'Building footprints and ground elevation © Vexcel Imaging US, Inc. Colour = flood depth at the building once the drill starts.':''].filter(Boolean).join(' · ');}
+ sync(){if(!this.panel)return;const p=this.rm.prefs;for(const x of this.panel.querySelectorAll('[data-base]'))x.setAttribute('aria-checked',String(x.dataset.base===p.base));for(const x of this.panel.querySelectorAll('[data-pref]'))x.checked=!!p[x.dataset.pref];const s=this.rm.state?.scenario,houston=!!s?.id?.startsWith('houston'),rasuwa=s?.id==='rasuwa';this.panel.querySelector('[data-pref=vexcel]').closest('label').hidden=!houston;const harvey=s?.raster?.key==='harvey',sm=this.rm.sentinelMeta;this.panel.querySelector('[data-pref=sentinel]').closest('label').hidden=!harvey;this.panel.querySelector('[data-base-title]').hidden=rasuwa;this.panel.querySelector('.layers-base').hidden=rasuwa;this.panel.querySelector('[data-note]').textContent=[p.base==='aerial'&&!rasuwa?VEXCEL_ATTRIBUTION:'',p.sentinel&&harvey&&sm?`Sentinel-1 radar, ${sm.scenes.flood.date}: cyan = open-water flood, violet = flood among buildings and trees, navy = permanent water. ${Math.round(sm.agreement.precision*100)}% of it lies inside the FEMA extent; it confirms ${Math.round(sm.agreement.hitRate*100)}% of that extent (radar misses much flooding under trees). Contains Copernicus Sentinel data 2017.`:'',p.vexcel&&houston?'Building footprints and ground elevation © Vexcel Imaging US, Inc. Colour = flood depth at the building once the drill starts.':''].filter(Boolean).join(' · ');}
  onRemove(){}
 }
 
 // Everything the simulation draws. Hidden while the flood depth map is open.
-const SCENE_LAYERS=['buildings-3d','vexcel-buildings','zone-fill','zone-edge','warning-zone','hazard-fill','hazard-edge','flood-zones','drill-zones','flow-line','flow-arrows','route-shadow','route-line'];
+const SCENE_LAYERS=['buildings-3d','vexcel-buildings','sentinel-1','zone-fill','zone-edge','warning-zone','hazard-fill','hazard-edge','flood-zones','drill-zones','flow-line','flow-arrows','route-shadow','route-line'];
 // Drawn only once the simulation has started.
 const AFTER_START=['zone-fill','zone-edge','flood-zones','drill-zones','flow-line','flow-arrows'];
 
@@ -96,6 +96,10 @@ export class ResponseMap{
  /** Show or hide a layer. While the depth map is open, remember the wish and apply it on close. */
  /** Vexcel footprints for the current Houston drill (Princeton and Rasuwa have none). */
  loadVexcel(s){const key=s?.raster&&s.id.startsWith('houston')?s.raster.key:null;if(key===this.vexcelKey)return;this.vexcelKey=key;this.vexcelHas=false;this.map.getSource('vexcel')?.setData(empty());if(key)fetch(`/data/vexcel/houston-${key}.geojson`).then(r=>r.ok?r.json():null).then(d=>{if(d&&this.vexcelKey===key){this.map.getSource('vexcel')?.setData(d);this.vexcelHas=true;this.showVexcel();}}).catch(()=>{});}
+ /** Sentinel-1 radar flood map for Hurricane Harvey (scripts/sentinel1-harvey.py). Harvey only; off by default. */
+ loadSentinel(s){const harvey=s?.raster?.key==='harvey';if(harvey&&!this.map.getSource('sentinel-1')&&!this.sentinelLoading){this.sentinelLoading=true;
+   fetch('/data/sentinel1/harvey/meta.json').then(r=>r.ok?r.json():null).then(m=>{if(!m)return;this.sentinelMeta=m;if(!this.map.getSource('sentinel-1')){this.map.addSource('sentinel-1',{type:'image',url:'/data/sentinel1/harvey/flood.png',coordinates:m.bounds});this.map.addLayer({id:'sentinel-1',type:'raster',source:'sentinel-1',layout:{visibility:'none'},paint:{'raster-opacity':.9,'raster-resampling':'nearest','raster-fade-duration':0}},this.label);}this.setVisible('sentinel-1',this.state?.scenario?.raster?.key==='harvey');this.layersControl?.sync();}).catch(()=>{}).finally(()=>{this.sentinelLoading=false;});}
+  else this.setVisible('sentinel-1',harvey);}
  vexcelOn(){return !!(this.prefs.vexcel&&this.vexcelHas&&this.state?.mode&&this.state.mode!=='ready');}
  showVexcel(){if(!this.loaded||this.compact)return;const on=this.vexcelOn();this.setVisible('vexcel-buildings',on);this.setVisible('buildings-3d',this.view==='3d'&&!on);}
  setVisible(id,on){if(!this.map.getLayer(id))return;if(PREF_OF[id]&&!this.prefs[PREF_OF[id]])on=false;const v=on?'visible':'none';if(this.floodMode){this.hidden.set(id,v);return;}if(this.map.getLayoutProperty(id,'visibility')!==v)this.map.setLayoutProperty(id,'visibility',v);}
@@ -106,7 +110,7 @@ export class ResponseMap{
   if(this.loaded){
    const s=this.state?.scenario,us=s&&s.id!=='rasuwa',aerial=this.prefs.base==='aerial';
    for(const k of Object.keys(AERIAL))this.setVisible('aerial-'+k,aerial&&us);
-   this.setVisible('buildings-3d',!this.compact&&this.view==='3d'&&!this.vexcelOn());for(const id of ['route-shadow','route-line'])this.setVisible(id,true);this.showVexcel();
+   this.setVisible('buildings-3d',!this.compact&&this.view==='3d'&&!this.vexcelOn());for(const id of ['route-shadow','route-line'])this.setVisible(id,true);this.showVexcel();this.setVisible('sentinel-1',this.state?.scenario?.raster?.key==='harvey');
    if(this.state)this.update(this.state);this.lastT=null;
   }
   this.layersControl?.sync();
@@ -223,7 +227,7 @@ export class ResponseMap{
    this.map.getSource('arrows').setData(s.arrows||empty());
    if(s.raster)this.rasterLayers(s.raster).catch(()=>{});else this.clearBands();
    if(this.prefs.base==='aerial')queueMicrotask(()=>this.setPrefs());
-   this.loadVexcel(s);
+   this.loadVexcel(s);this.loadSentinel(s);
    this.layersControl?.sync();
    if(this.floodControl.el)this.floodControl.el.hidden=!s.id.startsWith('houston');
    if(this.floodMode&&!s.id.startsWith('houston'))this.setFloodMap(false);

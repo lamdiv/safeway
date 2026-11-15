@@ -1,0 +1,57 @@
+{
+ "source": "Copernicus Sentinel-1 (ESA), radiometrically terrain corrected (RTC) by Microsoft Planetary Computer",
+ "scenes": {
+  "before": {
+   "id": "S1A_IW_GRDH_1SDV_20170824T122248_20170824T122318_018065_01E54E_rtc",
+   "date": "2017-08-24",
+   "orbit": "descending, relative orbit 143"
+  },
+  "flood": {
+   "id": "S1B_IW_GRDH_1SDV_20170830T122203_20170830T122232_007169_00CA2C_rtc",
+   "date": "2017-08-30",
+   "orbit": "descending, relative orbit 143"
+  }
+ },
+ "bounds": [
+  [
+   -95.235,
+   30.069999999999986
+  ],
+  [
+   -95.16999999999999,
+   30.069999999999986
+  ],
+  [
+   -95.16999999999999,
+   30.025000000000016
+  ],
+  [
+   -95.235,
+   30.025000000000016
+  ]
+ ],
+ "method": "Change detection on VV gamma0 (5x5 speckle filter). Open-water flood: VV below -15 dB on the flood day and at least 3 dB darker than before. Flood among buildings and trees (double bounce): VV at least 3 dB brighter and ground within 6 m of the nearest permanent water. Permanent water: already below -15 dB before the storm.",
+ "terrain": "Vexcel DTM (2025 aerial survey, ~2.4 m) fused with USGS 3DEP lidar: Vexcel where it agrees with the lidar within 1 m after removing its +0.75 m offset, lidar on water, under buildings and dense canopy",
+ "waterThresholdDb": -15.0,
+ "handMaxM": 6.0,
+ "areaKm2": {
+  "radarFlood": 2.84,
+  "openWater": 0.33,
+  "buildingsAndTrees": 2.51,
+  "permanentWater": 0.74,
+  "drillExtent": 14.15
+ },
+ "agreement": {
+  "hitRate": 0.171,
+  "precision": 0.852,
+  "falseAlarmRatio": 0.148,
+  "criticalSuccessIndex": 0.166,
+  "detectedByZone": {
+   "high": 0.126,
+   "medium": 0.264,
+   "low": 0.269
+  },
+  "note": "Drill extent = FEMA Harvey inundation outline (depth grid > 0), permanent water excluded. Precision = share of what the radar flagged that lies inside the drill extent. Hit rate = share of the drill extent the radar also flagged. Radar misses much flooding under dense canopy, so a low hit rate is expected here."
+ },
+ "limits": "Flooding under canopy and in dense streets often does not darken in radar; wind-roughened water can look bright. One snapshot (30 Aug 2017 12:22 UTC), not the peak everywhere."
+}

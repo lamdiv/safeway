@@ -97,3 +97,27 @@ Vexcel API 2.0 (`https://api.vexcelgroup.com/v2`, key in `.env` as `VEXCEL_API_K
 - **Validation:** no USGS high-water marks fall inside the Kingwood drill area, so the fusion has not been scored against observations there.
 
 The map's "Affected zones" layer now follows the water. Each cell is coloured by the depth of water standing on it at that moment (final depth minus the falling threshold), so zones start in the river channel and spread outwards, green → yellow → red. Ground the water hasn't reached stays clear.
+
+## Sentinel-1 radar: Hurricane Harvey (Kingwood drill)
+
+`scripts/sentinel1-harvey.py` produces `public/data/sentinel1/harvey/`. On the map it is the Layers option "Sentinel-1 radar · 30 Aug 2017", shown for Harvey only.
+
+- **Data:** Copernicus Sentinel-1 radar (ESA), terrain-corrected (RTC, 10 m) by Microsoft Planetary Computer, cropped through its public data API. Radar sees through cloud and rain.
+- **Scenes:** two passes on the same descending orbit (relative orbit 143), so the change isn't a viewing-angle effect:
+  - before: 24 Aug 2017 (`S1A_…_018065_01E54E`);
+  - flood: 30 Aug 2017 (`S1B_…_007169_00CA2C`).
+- **Method:** change detection on VV (5×5 speckle filter).
+  - **Open-water flood:** below −15 dB on 30 Aug and at least 3 dB darker than on 24 Aug.
+  - **Flooding among buildings and trees ("double bounce"):** at least 3 dB brighter, and within 6 m of the nearest permanent water (height above nearest drainage, from the fused terrain).
+  - **Permanent water:** already below −15 dB on 24 Aug.
+  - Otsu's automatic threshold was tried first and rejected, because the flood-day histogram here has no clear water peak.
+- **Result:**
+  - 2.84 km² flagged: 2.51 km² by double bounce and 0.33 km² of open water.
+  - 85% of what the radar flags lies inside the FEMA Harvey outline used by the drill.
+  - The radar confirms 17% of that outline (critical success index 0.17).
+- **Limits:**
+  - Much of the flooding under dense canopy shows neither signal.
+  - Wind-roughened water can look bright.
+  - It is one snapshot (30 Aug, 12:22 UTC), while FEMA's outline is the maximum extent compiled after the event.
+  - So the radar is independent confirmation where it fires, not a complete extent.
+- **Credit:** contains modified Copernicus Sentinel data 2017.
