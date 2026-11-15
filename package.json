@@ -14,7 +14,8 @@
     "qa:response": "node scripts/flood-response-qa.mjs",
     "qa:calls": "node scripts/call-reliability-qa.mjs",
     "qa:flood": "node scripts/flood-response-qa.mjs",
-    "qa:surface": "node scripts/flood-surface-qa.mjs"
+    "qa:surface": "node scripts/flood-surface-qa.mjs",
+    "qa:voice": "node scripts/direct-voice-qa.mjs"
   },
   "dependencies": {
     "@elevenlabs/client": "1.32.1",

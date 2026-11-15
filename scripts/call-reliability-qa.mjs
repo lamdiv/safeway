@@ -46,7 +46,7 @@ try{
   const scenario=index%2?'houston':'rasuwa';
   await ops[0].locator('.scenario-tabs button[data-scenario="'+scenario+'"]').click();
   if(index)await ops[1].locator('.scenario-tabs button[data-scenario="'+scenario+'"]').click();
-  await phone.goto(base+'/phone?key=test-phone&person='+scenario+'-a');
+  await phone.goto(base+'/phone?key=test-phone&person='+scenario+'-a&mode=warning');
   const joined=phone.waitForResponse(r=>r.url().endsWith('/api/demo/connect')&&r.request().method()==='POST');
   await phone.locator('#connect').click();const token=(await(await joined).json()).token;
   await phone.waitForFunction(()=>document.body.dataset.connected==='true');

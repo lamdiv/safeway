@@ -4,7 +4,7 @@ A local flood-response demo for **Rasuwa, Nepal**, and three Houston scenarios: 
 
 The map now uses a continuous, terrain-following GPU water surface instead of 30 m columns. Street, Terrain and 3D views share the same scenario clock. Cohorts are **red (urgent exposure)**, **yellow (early action)** and **green (outside modeled inundation)**. Green does not mean verified real-world safety.
 
-Start the drill and every connected resident gets immediate on-screen guidance **and an automatic WebRTC voice call**, including green monitoring updates. The live arrival countdown is derived from the authored scenario progression. One playback second represents six scenario seconds; no calibrated flood arrival forecast is claimed. A resident can act on written guidance without waiting for a call to connect.
+Start the drill and every connected resident gets immediate on-screen guidance **and a live SafeWay conversation**, including green monitoring updates. The live arrival countdown is derived from the authored scenario progression. One playback second represents six scenario seconds; no calibrated flood arrival forecast is claimed. A resident can act on written guidance without waiting for a call to connect.
 
 Change the progression to 2× or 4× to test acceleration. If the demo route no longer clears the modeled flood in time, SafeWay withdraws it, cancels the old call, rejects stale acknowledgements, issues replacement guidance and creates a rescue task automatically. Shelter instructions require a defined viable **demo refuge** near the resident; otherwise guidance withholds movement and requests rescue without inventing a refuge. A slowdown cannot silently republish an already-withdrawn route.
 
@@ -19,7 +19,9 @@ npm run dev
 
 Open `http://localhost:4173/` on the host computer. The launcher also starts a local HTTPS service on port 8443 for other devices. It creates a private, short-lived local certificate and saves the exact phone/responder URLs in `.sites-runtime/response-demo-links.json`. These files are ignored by Git. Device links are deliberately absent from the dashboard.
 
-On each device, open its private URL, accept the local certificate warning, and tap **Connect** once. Keep the pages open. Use the same reachable Wi-Fi or personal hotspot. The dashboard must remain open: it is the WebRTC voice caller. No microphone is requested; the message is streamed as audio into the peer connection. This is an in-browser ringing call, not a background/native phone-network call. A network that isolates clients or blocks peer traffic needs a different LAN/hotspot or a TURN relay; no external relay is configured.
+On each resident device, open its private URL, accept the local certificate warning, and tap **Connect & talk** once to grant microphone access. SafeWay starts the two-way conversation directly, including Princeton building guidance before a drill. There is no Answer step. Keep the page open. End or Stop sharing closes the conversation; use Reconnect conversation to start again. The server needs `ELEVENLABS_API_KEY` and `HEADWATER_VOICE_AGENT_ID` in the ignored `.env`. Startup and build prepare the browser SDK automatically after `npm ci`.
+
+For the earlier prerecorded WebRTC warning demo, append `&mode=warning` to a resident link. That mode requires an open dashboard and a reachable LAN/hotspot; it does not request the resident microphone. It is an in-browser call, not a background/native phone-network call.
 
 Then choose **Rasuwa / Flood** or **Houston / Flood** and press **Start simulation**. There is one Start/Pause/Resume control and one Reset control. No public feed loading, sponsor setup, water sliders or second workflow is needed for this demo.
 
@@ -44,7 +46,7 @@ Locations, sessions, calls and SOS are held in memory. Reset invalidates previou
 
 Both hazards, people, destinations, time-to-leave and route movement are authored **simulations**, not current disasters, calibrated forecasts or verified public evacuation instructions. The flood front follows the cached Rasuwa terrain drainage path; the Houston floods come from mapped flood outlines (FEMA’s Harvey inundation boundary; FEMA flood zones for the two hypothetical floods) with depth estimated from USGS elevation (`scripts/houston-floods.py`). The warning zone includes an exercise lead time and buffer. OSM streets and derived building extrusions provide geographic context; missing building heights use a display fallback. Nepal relief uses cached Mapzen/SRTM tiles at actual scale. Real GPS is not substituted for the resident's scenario position.
 
-Warnings are actual WebRTC voice messages, generated locally from authored drill text. No real phone-number calls, SMS, public emergency dispatch, external AI request or hosted deployment is needed. Previous monitoring/sponsor functionality remains in the repository for reference, outside the new default experience. Main is preserved; changes are on `safeway`.
+Default conversations use ElevenLabs over a signed server-issued session. The optional warning mode uses locally generated WebRTC messages. Neither mode makes real phone-number calls, sends SMS or dispatches public emergency services. `npm run qa:voice` verifies the actual browser SDK import and direct-conversation lifecycle using a mocked provider, without paid AI sessions.
 
 ## Verify
 
@@ -68,4 +70,4 @@ A phone can answer before an offer exists. Only an audio-enabled dashboard may c
 
 `npm run qa:flood` verifies five independent screens, real decoded speech for all three zones and urgent replacement calls, immediate route withdrawal, stale-ack rejection and automatic rescue acknowledgement. The test isolates maps to keep software rendering from distorting voice measurements. `npm run qa:surface` separately exercises actual GPU water, all three map views and mobile layout. Artifacts are in ignored `outputs/`.
 
-Speech for each current guidance revision is generated locally with macOS Samantha (`say`), cached privately under `.sites-runtime/response-voice/`, and streamed over the existing WebRTC connection. This local launcher therefore needs macOS for dynamic voice generation. It makes no external AI or telephony request. The green demonstration resident is explicitly placed outside the modeled footprint, not renamed from a flooded point.
+In optional warning mode, speech for each current guidance revision is generated locally with macOS Samantha (`say`), cached privately under `.sites-runtime/response-voice/`, and streamed over the existing WebRTC connection. This local launcher therefore needs macOS for dynamic voice generation. It makes no external AI or telephony request. The green demonstration resident is explicitly placed outside the modeled footprint, not renamed from a flooded point.
