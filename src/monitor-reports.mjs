@@ -1,0 +1,9 @@
+import {distanceM} from './analysis.mjs';import {randomUUID} from 'node:crypto';import {readFile,writeFile,mkdir,rename} from 'node:fs/promises';import {dirname} from 'node:path';
+export function assessReport(input,assets,now=Date.now()){
+ const p=input.coordinates,r=Number(input.radiusM);if(input.region!=='rasuwa')throw new Error('A matched Houston inventory is required before exposure can be calculated.');
+ if(!Array.isArray(p)||p.length!==2||!p.every(Number.isFinite)||Math.abs(p[0])>180||Math.abs(p[1])>90||!Number.isFinite(r)||r<20||r>2000)throw new Error('Valid WGS84 coordinates and a radius of 20–2000 m are required.');
+ const affected=assets.filter(a=>distanceM(a.coordinates,p)<=r),crossings=affected.filter(a=>a.kind==='crossing');
+ return {id:randomUUID(),actionId:input.actionId,region:input.region,coordinates:p,radiusM:r,reportedAt:new Date(now).toISOString(),sourceClass:'operator_report',verified:false,assessment:{affectedRecords:affected.length,assetIds:affected.map(a=>a.id),inventory:'Historical damage-selected CEMS assessment sample; current occupancy unknown',probability:null,depth:null},tasks:crossings.map(a=>({id:randomUUID(),kind:'access_check',assetId:a.id,coordinates:a.coordinates,status:'review_required',reason:'Mapped crossing intersects an operator-selected assessment radius; damage is unverified.'})),automaticDispatch:false};
+}
+let queue=Promise.resolve();
+export async function reportStore(path,input,assets){const work=queue.then(async()=>{let reports=[];try{reports=JSON.parse(await readFile(path,'utf8'));}catch(e){if(e.code!=='ENOENT')throw e;}if(!input)return reports;const old=reports.find(r=>r.actionId&&r.actionId===input.actionId);if(old)return old;const report=assessReport(input,assets);reports.unshift(report);await mkdir(dirname(path),{recursive:true});await writeFile(path+'.tmp',JSON.stringify(reports.slice(0,100),null,2));await rename(path+'.tmp',path);return report;});queue=work.catch(()=>{});return work;}

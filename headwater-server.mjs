@@ -1,4 +1,6 @@
+import {reportStore} from './src/monitor-reports.mjs';
 import http from 'node:http';
+import {monitoringSnapshot} from './src/monitor.mjs';
 import {readFile,stat} from 'node:fs/promises';
 import {resolve,extname,sep} from 'node:path';
 import {fileURLToPath} from 'node:url';
@@ -23,6 +25,8 @@ export const server=http.createServer(async(req,res)=>{
  try{
   const path=new URL(req.url,'http://localhost').pathname;
   res.setHeader('X-Content-Type-Options','nosniff');res.setHeader('Referrer-Policy','strict-origin-when-cross-origin');
+  if(path==='/api/monitor/reports'){if(!authorized(req))return json(res,403,{error:'Operator authorization required'});if(!['GET','POST'].includes(req.method))return json(res,405,{error:'GET or POST required'});const input=req.method==='POST'?await body(req):null;const result=await reportStore(resolve(ROOT,'data/runtime/monitor-reports.json'),input,input?await load('assets.json'):null);return json(res,200,result);}
+  if(path==='/api/monitor'&&req.method==='GET'){try{return json(res,200,await monitoringSnapshot(new URL(req.url,'http://localhost').searchParams.get('region')||'rasuwa'));}catch{return json(res,400,{error:'Monitoring request failed'});}}
   if(path==='/api/config'){const c=modelConfiguration();return json(res,200,{...c,provider:c.providerLabel,agentAvailable:c.configured,voice:voiceConfiguration(),alerts:alertConfiguration(),authorizationRequired:Boolean(process.env.HEADWATER_API_TOKEN),mode:c.configured?`live-${c.provider}-deepagent`:'not-configured'});}
   if(path==='/api/incident/alerts'){
    if(req.method!=='POST')return json(res,405,{error:'POST required'});
@@ -59,7 +63,7 @@ export const server=http.createServer(async(req,res)=>{
    }catch(e){console.error('Investigation failed:',e.name);return json(res,502,{error:'The model investigation failed. Check server configuration and try again.',code:'AGENT_FAILED'});}finally{clearTimeout(timer);busy=false;}
   }
   if(req.method!=='GET'&&req.method!=='HEAD')return json(res,405,{error:'GET required'});
-  const local=path.startsWith('/src/')?resolve(ROOT,'.'+path):resolve(PUBLIC,'.'+(path==='/'?'/index.html':path));
+  const local=path.startsWith('/src/')?resolve(ROOT,'.'+path):resolve(PUBLIC,'.'+(path==='/'?'/monitor.html':path==='/playback'?'/index.html':path));
   const allowed=path.startsWith('/src/')?resolve(ROOT,'src'):PUBLIC;
   if(local!==allowed&&!local.startsWith(allowed+sep))return json(res,403,{error:'Invalid path'});
   let data;try{if(!(await stat(local)).isFile())throw new Error();data=await readFile(local);}catch{return json(res,404,{error:'Not found'});}

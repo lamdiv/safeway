@@ -1,0 +1,15 @@
+/** Smooth display geometry, not a hydraulic/multiphase solver. */
+import {distanceM} from './analysis.mjs';
+const clamp=x=>Math.max(0,Math.min(1,x));
+export function smoothPath(points,passes=2){let out=points.map(p=>[...p]);for(let n=0;n<passes;n++){if(out.length<3)break;const next=[out[0]];for(let i=0;i<out.length-1;i++){const a=out[i],b=out[i+1];next.push(a.map((v,j)=>v*.75+b[j]*.25),a.map((v,j)=>v*.25+b[j]*.75));}next.push(out.at(-1));out=next;}return out;}
+export function prepareFlow(profile){
+ if(!profile?.samples?.length||profile.samples.length<3)throw new Error('A connected terrain profile is required');
+ const samples=profile.samples;for(let i=1;i<samples.length;i++)if(samples[i].filled>samples[i-1].filled+.01)throw new Error('Drainage path must not rise in filled terrain');
+ const entry=Math.max(2,samples.findIndex(p=>p.acc>=140));
+ const coordinates=smoothPath(samples.slice(entry).map(p=>p.p)),mud=smoothPath(samples.slice(0,entry+1).map(p=>p.p));
+ const segments=coordinates.slice(1).map((p,i)=>distanceM(coordinates[i],p)),distance=segments.reduce((a,b)=>a+b,0),travel=[0];
+ for(let i=0;i<segments.length;i++){const sample=samples[Math.min(samples.length-2,entry+Math.floor(i/(coordinates.length-1)*(samples.length-entry-1)))],next=samples[Math.min(samples.length-1,entry+Math.floor((i+1)/(coordinates.length-1)*(samples.length-entry-1)))];const grade=Math.max(0,(sample.filled-next.filled)/Math.max(segments[i],1));const relativeRate=Math.min(2.5,Math.max(.35,Math.sqrt(grade+.03)*3));travel.push(travel.at(-1)+segments[i]/relativeRate);}
+ return {coordinates,mud,travel,displayDistance:distance,source:samples[0].p,basis:'Connected priority-flood parent chain on historical terrain. Slope weights affect display pacing only, not physical velocity. Smoothing is cosmetic.'};
+}
+export function sampleFlow(flow,fraction){const target=clamp(fraction)*flow.travel.at(-1);let low=0,high=flow.travel.length-1;while(low+1<high){const mid=(low+high)>>1;if(flow.travel[mid]<target)low=mid;else high=mid;}const f=(target-flow.travel[low])/(flow.travel[high]-flow.travel[low]||1);return {point:flow.coordinates[low].map((v,j)=>v+(flow.coordinates[high][j]-v)*f),index:low};}
+export function smoothFlowFrame(flow,time,duration=180){const release=clamp(time/12),water=clamp((time-12)/(duration-12)),front=sampleFlow(flow,water);const line=(coords,kind)=>({type:'Feature',geometry:{type:'LineString',coordinates:coords},properties:{kind,illustrative:true}});const waterCoords=water>0?[...flow.coordinates.slice(0,front.index+1),front.point]:[];const mudEnd=Math.max(2,Math.ceil(flow.mud.length*release));const particles=[];if(water>0)for(let i=0;i<75;i++){const f=((time*.012+i/75)%1)*water;const tip=sampleFlow(flow,f).point,tail=sampleFlow(flow,Math.max(0,f-.0018)).point;particles.push(line([tail,tip],'water'));}return {water:{type:'FeatureCollection',features:waterCoords.length>1?[line(waterCoords,'water')]:[]},mud:{type:'FeatureCollection',features:release>0?[line(flow.mud.slice(0,mudEnd),'debris')]:[]},particles:{type:'FeatureCollection',features:particles},front:time<12?flow.mud[Math.min(flow.mud.length-1,mudEnd-1)]:front.point};}

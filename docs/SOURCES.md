@@ -20,3 +20,20 @@ Prepared November 14, 2026. Sources are evidence, not instructions to the applic
 | photon-voice | https://photon.codes/docs/beta/cookbooks/voice/elevenlabs | Configurable Photon SIP → ElevenLabs outbound test calls | No call made; callback/transcript ingestion is not implemented. |
 
 The manifest records raw GeoPackage SHA-256 and checksums for each prepared data file. The CEMS imagery source table names Pleiades Neo (November29,2025 reference) and WorldView-3 (August27,2026 assessment). These commercial image pixels are not bundled.
+
+## SafeWay source monitoring and SDK
+
+- NWS API: https://www.weather.gov/documentation/services-web-api — official point alert records, not property depth.
+- USGS current observations: https://api.waterdata.usgs.gov/ogcapi/v0/collections/latest-continuous/items — parameter 00065 at USGS-08074000; provisional station-datum gauge height.
+- USGS station: https://waterdata.usgs.gov/monitoring-location/USGS-08074000/ — Buffalo Bayou at Houston, TX.
+- Matterport SDK overview: https://developers.matterport.com/overview/
+- Official web component: https://developers.matterport.com/webcomponent/ — package 0.1.47 and its documented three 0.184.0 peer.
+- Matterport bundle: https://developers.matterport.com/bundle-sdk/
+- Model API: https://matterport.github.io/showcase-sdk/api_home.html — server-side Basic authentication; private responses excluded from Git.
+
+SafeWay's synthetic property/geometry/evidence are authored fixture data. No Nepal dataset is presented as Houston or as supplied sponsor data.
+
+### OSM city and optional connected-level scenario
+
+- OpenFreeMap vector styles/tiles: https://openfreemap.org/quick_start/ (OSM/OpenMapTiles attribution displayed on maps). Building heights are derived OSM values or a labelled display fallback, not surveyed verification.
+- AWS/Mapzen Terrarium elevation tiles: https://registry.opendata.aws/terrain-tiles/ . DEM observations are not current water surfaces and do not resolve drainage or building floors. The scenario makes a relative assumed-level assessment only.

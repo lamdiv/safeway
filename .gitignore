@@ -14,3 +14,7 @@ data/runtime/
 
 # Local, unused Sites hosting identity; this app is run locally.
 .openai/
+
+# Generated Matterport SDK distribution; reproducible from npm dependencies.
+public/matterport-assets/
+public/vendor/safeway-matterport.mjs
