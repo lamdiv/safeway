@@ -1,37 +1,37 @@
 {
  "scenario": "brays",
  "radiusM": 250,
- "buildings": 5968,
- "flooded": 3753,
+ "buildings": 6001,
+ "flooded": 726,
  "byZone": {
-  "high": 93,
-  "medium": 2005,
-  "low": 1655,
-  "dry": 2215
+  "high": 0,
+  "medium": 315,
+  "low": 411,
+  "dry": 5275
  },
- "wetAtVexcelGround": 1038,
+ "wetAtVexcelGround": 266,
  "terrainCheck": {
-  "n": 5968,
-  "meanDiffFt": 2.22,
-  "meanAbsDiffFt": 2.26,
-  "medianAbsDiffFt": 2.17,
-  "within1Ft": 0.172,
+  "n": 6001,
+  "meanDiffFt": 2.3,
+  "meanAbsDiffFt": 2.34,
+  "medianAbsDiffFt": 2.23,
+  "within1Ft": 0.166,
   "note": "Vexcel building ground elevation minus USGS 3DEP 5 m bare earth at the footprint centroid. Vexcel reports whole feet."
  },
  "homes": [
   {
    "person": "a",
    "start": [
-    -95.447433,
+    -95.447388,
     29.697982
    ],
-   "gridDepthFt": 3.6,
+   "gridDepthFt": 4.4,
    "photo": "houston-brays-a.jpg",
    "nearestBuilding": {
     "type": "single_family",
     "vexcelGroundM": 16.46,
     "dep3GroundM": 14.99,
-    "gridDepthFt": 1.8,
+    "gridDepthFt": 0.2,
     "padDepthFt": 0.0,
     "heightM": null,
     "stories": null,
@@ -41,42 +41,42 @@
   {
    "person": "b",
    "start": [
-    -95.452647,
-    29.696774
+    -95.449231,
+    29.693577
    ],
-   "gridDepthFt": 1.6,
+   "gridDepthFt": 1.2,
    "photo": "houston-brays-b.jpg",
    "nearestBuilding": {
     "type": "single_family",
-    "vexcelGroundM": 16.46,
-    "dep3GroundM": 15.89,
+    "vexcelGroundM": 15.85,
+    "dep3GroundM": 15.53,
     "gridDepthFt": 0.0,
     "padDepthFt": 0.0,
     "heightM": null,
     "stories": null,
-    "areaM2": 182.0
+    "areaM2": 186.4
    }
   },
   {
    "person": "c",
    "start": [
-    -95.448736,
-    29.693421
+    -95.452737,
+    29.698645
    ],
-   "gridDepthFt": 0.3,
+   "gridDepthFt": 0.6,
    "photo": "houston-brays-c.jpg",
    "nearestBuilding": {
-    "type": null,
-    "vexcelGroundM": 15.54,
-    "dep3GroundM": 15.38,
-    "gridDepthFt": 0.7,
-    "padDepthFt": 0.1,
+    "type": "single_family",
+    "vexcelGroundM": 16.76,
+    "dep3GroundM": 15.62,
+    "gridDepthFt": 0.0,
+    "padDepthFt": 0.0,
     "heightM": null,
     "stories": null,
-    "areaM2": 217.0
+    "areaM2": 340.2
    }
   }
  ],
  "source": "Vexcel API 2.0 property elements and ortho imagery (\u00a9 Vexcel Imaging US, Inc.); USGS 3DEP; SafeWay FwDET depth grid",
- "generatedAt": "2026-11-15T10:15:52Z"
+ "generatedAt": "2026-11-15T11:24:29Z"
 }

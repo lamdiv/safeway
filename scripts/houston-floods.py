@@ -81,6 +81,77 @@ def dem_for(sid, bbox, n=3):
         rows.append(np.hstack(row))
     return np.vstack(rows), (x0, y0, x1, y1)
 
+# ---- Vexcel DTM (bare-earth terrain from Vexcel's own aerial surveys, ~15 cm native; fetched at zoom 16 ~ 2.4 m) ----
+VEXCEL_API = 'https://api.vexcelgroup.com/v2'
+
+def read_geotiff(path):
+    """Minimal GeoTIFF reader for Vexcel DTMs: float32, deflate or no compression, tiles or strips, EPSG:3857.
+    Returns (array with NaN for no-data, (x0, y_top, pixel_x, pixel_y))."""
+    import struct, zlib
+    b = open(path, 'rb').read(); bo = '>' if b[:2] == b'MM' else '<'
+    off = struct.unpack(bo + 'I', b[4:8])[0]; n = struct.unpack(bo + 'H', b[off:off + 2])[0]; size = {1: 1, 2: 1, 3: 2, 4: 4, 5: 8, 11: 4, 12: 8, 16: 8}; t = {}
+    for i in range(n):
+        e = b[off + 2 + 12 * i: off + 14 + 12 * i]; tag, typ, cnt = struct.unpack(bo + 'HHI', e[:8]); nb = size.get(typ, 1) * cnt
+        data = e[8:12] if nb <= 4 else b[struct.unpack(bo + 'I', e[8:12])[0]:][:nb]
+        fmt = {3: 'H', 4: 'I', 12: 'd', 11: 'f', 16: 'Q'}.get(typ)
+        t[tag] = data.decode(errors='replace').strip('\x00') if typ == 2 else list(struct.unpack(bo + fmt * cnt, data[:size[typ] * cnt])) if fmt else data
+    W, H = t[256][0], t[257][0]; comp = t.get(259, [1])[0]; nodata = float(t.get(42113, '-9999') or -9999)
+    if t.get(258, [32])[0] != 32 or t.get(339, [3])[0] != 3: raise SystemExit('Vexcel DTM: expected float32')
+    if t.get(317, [1])[0] != 1: raise SystemExit('Vexcel DTM: predictor not supported')
+    dec = (lambda x: zlib.decompress(x)) if comp in (8, 32946) else (lambda x: x) if comp == 1 else None
+    if dec is None: raise SystemExit(f'Vexcel DTM: compression {comp} not supported')
+    a = np.full((H, W), np.nan, dtype='float32')
+    if 322 in t:
+        TW, TH = t[322][0], t[323][0]; across = -(-W // TW)
+        for i, (o, c) in enumerate(zip(t[324], t[325])):
+            tile = np.frombuffer(dec(b[o:o + c]), dtype=bo + 'f4').reshape(TH, TW); r, cc = divmod(i, across)
+            hh, ww = min(TH, H - r * TH), min(TW, W - cc * TW); a[r * TH:r * TH + hh, cc * TW:cc * TW + ww] = tile[:hh, :ww]
+    else:
+        rows = t.get(278, [H])[0]
+        for i, (o, c) in enumerate(zip(t[273], t[279])):
+            strip = np.frombuffer(dec(b[o:o + c]), dtype=bo + 'f4'); r0 = i * rows; a[r0:r0 + strip.size // W] = strip.reshape(-1, W)
+    a[(a <= nodata + 1) | ~np.isfinite(a)] = np.nan
+    i, j, _, X, Y, _ = t[33922]; sx, sy, _ = t[33550]
+    if '3857' not in str(t.get(34737, '')) and 3857 not in t.get(34735, []): raise SystemExit('Vexcel DTM: expected EPSG:3857')
+    return a, (X - i * sx, Y + j * sy, sx, sy)
+
+def vexcel_dtm(sid, bbox, shape_, bm):
+    """Vexcel bare-earth DTM resampled onto the scenario grid (metres). NaN where Vexcel has no data."""
+    key = os.environ.get('VEXCEL_API_KEY')
+    if not key: return None
+    out = os.path.join(RAW, 'vexcel-dtm', sid + '.tif'); os.makedirs(os.path.dirname(out), exist_ok=True)
+    if not os.path.exists(out):
+        hdr = os.path.join(RAW, 'vexcel-dtm', '.key.hdr'); open(hdr, 'w').write('X-API-KEY: ' + key + '\n'); os.chmod(hdr, 0o600)
+        try:
+            w, s_, e, n = bbox
+            curl(['-G', VEXCEL_API + '/dtm/extract', '-H', '@' + hdr, '--data-urlencode', f'wkt=POLYGON(({w} {s_},{e} {s_},{e} {n},{w} {n},{w} {s_}))',
+                  '--data-urlencode', 'srid=4326', '--data-urlencode', 'zoom=16'], out, lambda p: open(p, 'rb').read(4) in (b'MM\x00*', b'II*\x00'))
+        finally:
+            os.unlink(hdr)
+    a, (vx0, vy0, sx, sy) = read_geotiff(out)
+    h, w = shape_; x0, y0, x1, y1 = bm
+    valid = np.isfinite(a); smooth = ndimage.uniform_filter(np.where(valid, a, 0), 2) / np.maximum(ndimage.uniform_filter(valid.astype('float32'), 2), 1e-6)  # ~2.4 m -> 5 m
+    cols = ((x0 + (np.arange(w) + .5) / w * (x1 - x0)) - vx0) / sx - .5; rows = (vy0 - (y1 - (np.arange(h) + .5) / h * (y1 - y0))) / sy - .5
+    rr, cc = np.meshgrid(rows, cols, indexing='ij')
+    vals = ndimage.map_coordinates(smooth, [rr, cc], order=1, mode='nearest'); ok = ndimage.map_coordinates(valid.astype('float32'), [rr, cc], order=1, mode='constant', cval=0) > .5
+    return np.where(ok, vals, np.nan).astype('float32')
+
+def terrain_for(sid, bbox, tolerance=1.0):
+    """Fuse Vexcel DTM with USGS 3DEP lidar bare earth.
+    Vexcel (2.4 m, 2025 photogrammetry) adds street-scale detail, but photogrammetric bare earth fails on water,
+    under large buildings and under dense canopy. So: remove Vexcel's overall offset from 3DEP (median difference),
+    then use Vexcel wherever it agrees with the lidar within `tolerance` metres, and 3DEP elsewhere.
+    Returns (dem, bm, terrain info)."""
+    dem3, bm = dem_for(sid, bbox); vx = vexcel_dtm(sid, bbox, dem3.shape, bm)
+    if vx is None: return dem3, bm, {'source': 'USGS 3DEP 5 m bare earth', 'vexcelShare': 0}
+    ok = np.isfinite(vx) & np.isfinite(dem3) & (dem3 > -100); offset = float(np.median((vx - dem3)[ok]))
+    adj = vx - offset; agree = ok & (np.abs(adj - dem3) <= tolerance)
+    agree = ndimage.binary_opening(agree, iterations=1)  # drop isolated cells so the two sources don't speckle
+    dem = np.where(agree, adj, dem3).astype('float32')
+    return dem, bm, {'source': f'Vexcel DTM (2025 aerial survey, ~2.4 m) fused with USGS 3DEP lidar: Vexcel where it agrees with the lidar within {tolerance:g} m after removing its {offset:+.2f} m offset, lidar on water, under buildings and dense canopy',
+                     'vexcelShare': round(float(agree.mean()), 3), 'vexcelCoverage': round(float(np.isfinite(vx).mean()), 3), 'vexcelOffsetM': round(offset, 2),
+                     'vexcelMinus3depP90AbsM': round(float(np.percentile(np.abs((vx - dem3)[ok] - offset), 90)), 2)}
+
 def fema_extent(sid, bbox, sfha_only=False):
     out = os.path.join(RAW, 'fema', sid + '.geojson'); os.makedirs(os.path.dirname(out), exist_ok=True)
     if not os.path.exists(out):
@@ -179,14 +250,14 @@ def pick_people(depth, dry_dist, bbox_m, shape_):
     return [{'start': ll(*a), 'destination': ll(*b), 'depthFt': round(float(d[a]), 1)} for a, b in people]
 
 def build(sid, cfg):
-    bbox = cfg['bbox']; dem, bm = dem_for(sid, bbox); clip = box(*bbox); h, w = dem.shape
+    bbox = cfg['bbox']; dem, bm, terrain = terrain_for(sid, bbox); clip = box(*bbox); h, w = dem.shape
     x0, y0, x1, y1 = bm
     cell = lambda lon, lat: (int((y1 - merc(lon, lat)[1]) / (y1 - y0) * h), int((merc(lon, lat)[0] - x0) / (x1 - x0) * w))
     if cfg['source'] == 'bathtub':
         seed = rasterize([g.intersection(clip) for g in osm_water(cfg['seedNames'])], dem.shape, bm)
         level = float(dem[cell(*cfg['target'])]) + cfg['targetDepthFt'] / FT
         mask = bathtub(dem, seed, level); depth = np.where(mask, np.clip((level - dem) * FT, 0, None), np.nan)
-        info = {'dataset': 'Artificial drill flood: water rising out of Lake Carnegie and Stony Brook (OpenStreetMap) over USGS 3DEP elevation (connected-bathtub model)',
+        info = {'dataset': 'Artificial drill flood: water rising out of Lake Carnegie and Stony Brook (OpenStreetMap) over ' + ('Vexcel DTM' if terrain['vexcelShare'] else 'USGS 3DEP') + ' elevation (connected-bathtub model)',
                 'waterLevelM': round(level, 2), 'lakeSurfaceM': round(float(np.median(dem[seed])), 2)}
     else:
         geoms, info = harvey_extent(bbox) if cfg['source'] == 'harvey' else fema_extent(sid, bbox, cfg.get('sfhaOnly', False))
@@ -213,8 +284,8 @@ def build(sid, cfg):
             'zones': [{'zone': z, 'minFt': lo, 'maxFt': hi, 'color': c} for z, lo, hi, c in ZONES],
             'areaKm2': {'flooded': round(float(mask.sum()) * cell, 2), **{z: round(float(((d >= lo) & (d < (np.inf if hi is None else hi))).sum()) * cell, 2) for z, lo, hi, _ in ZONES}},
             'areaKm2ByLevel': {str(lv): round(float(m.sum()) * cell, 3) for (lv, *_), (m, _) in zip(LEVELS, level_masks(d))},
-            'medianDepthFt': round(float(np.nanmedian(depth)), 1), 'people': people, 'extent': info,
-            'method': 'FwDET (Cohen et al. 2018): water surface from the ground elevation at the nearest edge of the flood extent, smoothed (75 m, or 500 m on the broad Brays floodplain), minus USGS 3DEP 5 m bare-earth elevation.',
+            'medianDepthFt': round(float(np.nanmedian(depth)), 1), 'people': people, 'extent': info, 'terrain': terrain,
+            'method': 'FwDET (Cohen et al. 2018): water surface from the ground elevation at the nearest edge of the flood extent, smoothed (75 m, or 500 m on the broad Brays floodplain), minus the bare-earth elevation (' + terrain['source'] + ').',
             'generatedAt': datetime.now(timezone.utc).isoformat(timespec='seconds')}
     json.dump(meta, open(os.path.join(folder, 'meta.json'), 'w'), indent=1)
     print(sid, 'flooded km2', meta['areaKm2'], 'median ft', meta['medianDepthFt'], 'people', [(p['depthFt']) for p in people])
