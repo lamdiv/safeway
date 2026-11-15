@@ -24,17 +24,17 @@
  ],
  "resolutionM": 5,
  "thresholdsFt": [
-  156.61,
-  142.37,
-  128.13,
-  113.9,
-  99.66,
-  85.42,
-  71.18,
-  56.95,
-  42.71,
-  28.47,
-  14.24,
+  157.92,
+  143.57,
+  129.21,
+  114.85,
+  100.5,
+  86.14,
+  71.78,
+  57.43,
+  43.07,
+  28.71,
+  14.36,
   0.0
  ],
  "depthEncoding": "uint16le",
@@ -103,21 +103,21 @@
   }
  ],
  "areaKm2": {
-  "flooded": 17.94,
-  "high": 17.69,
-  "medium": 0.17,
-  "low": 0.09
+  "flooded": 17.96,
+  "high": 17.72,
+  "medium": 0.16,
+  "low": 0.08
  },
  "areaKm2ByLevel": {
-  "1": 0.085,
-  "2": 0.087,
-  "3": 0.079,
+  "1": 0.079,
+  "2": 0.082,
+  "3": 0.082,
   "4": 0.082,
-  "5": 0.08,
-  "6": 0.086,
-  "7": 17.445
+  "5": 0.077,
+  "6": 0.079,
+  "7": 17.482
  },
- "medianDepthFt": 73.8,
+ "medianDepthFt": 74.4,
  "people": [
   {
    "start": [
@@ -143,10 +143,17 @@
   }
  ],
  "extent": {
-  "dataset": "Artificial drill flood: water rising out of Lake Carnegie and Stony Brook (OpenStreetMap) over USGS 3DEP elevation (connected-bathtub model)",
+  "dataset": "Artificial drill flood: water rising out of Lake Carnegie and Stony Brook (OpenStreetMap) over Vexcel DTM elevation (connected-bathtub model)",
   "waterLevelM": 62.57,
   "lakeSurfaceM": 14.93
  },
- "method": "FwDET (Cohen et al. 2018): water surface from the ground elevation at the nearest edge of the flood extent, smoothed (75 m, or 500 m on the broad Brays floodplain), minus USGS 3DEP 5 m bare-earth elevation.",
- "generatedAt": "2026-11-15T09:26:17+00:00"
+ "terrain": {
+  "source": "Vexcel DTM (2025 aerial survey, ~2.4 m) fused with USGS 3DEP lidar: Vexcel where it agrees with the lidar within 1 m after removing its +0.86 m offset, lidar on water, under buildings and dense canopy",
+  "vexcelShare": 0.549,
+  "vexcelCoverage": 0.985,
+  "vexcelOffsetM": 0.86,
+  "vexcelMinus3depP90AbsM": 7.66
+ },
+ "method": "FwDET (Cohen et al. 2018): water surface from the ground elevation at the nearest edge of the flood extent, smoothed (75 m, or 500 m on the broad Brays floodplain), minus the bare-earth elevation (Vexcel DTM (2025 aerial survey, ~2.4 m) fused with USGS 3DEP lidar: Vexcel where it agrees with the lidar within 1 m after removing its +0.86 m offset, lidar on water, under buildings and dense canopy).",
+ "generatedAt": "2026-11-15T11:23:20+00:00"
 }

@@ -104,53 +104,53 @@
  ],
  "areaKm2": {
   "flooded": 20.01,
-  "high": 3.14,
-  "medium": 6.12,
-  "low": 10.75
+  "high": 3.76,
+  "medium": 5.47,
+  "low": 10.77
  },
  "areaKm2ByLevel": {
-  "1": 10.749,
-  "2": 3.843,
-  "3": 2.272,
-  "4": 1.218,
-  "5": 0.678,
-  "6": 0.43,
-  "7": 0.818
+  "1": 10.77,
+  "2": 3.272,
+  "3": 2.203,
+  "4": 1.301,
+  "5": 0.805,
+  "6": 0.518,
+  "7": 1.139
  },
- "medianDepthFt": 0.9,
+ "medianDepthFt": 0.8,
  "people": [
   {
    "start": [
-    -95.447433,
+    -95.447388,
     29.697982
    ],
    "destination": [
-    -95.446084,
-    29.707183
+    -95.446039,
+    29.707222
    ],
-   "depthFt": 3.6
+   "depthFt": 4.4
   },
   {
    "start": [
-    -95.452647,
-    29.696774
+    -95.449231,
+    29.693577
    ],
    "destination": [
-    -95.446399,
+    -95.446578,
     29.707105
    ],
-   "depthFt": 1.6
+   "depthFt": 1.2
   },
   {
    "start": [
-    -95.448736,
-    29.693421
+    -95.452737,
+    29.698645
    ],
    "destination": [
-    -95.446534,
-    29.7073
+    -95.446578,
+    29.707651
    ],
-   "depthFt": 0.3
+   "depthFt": 0.6
   }
  ],
  "extent": {
@@ -159,6 +159,13 @@
    "48201C"
   ]
  },
- "method": "FwDET (Cohen et al. 2018): water surface from the ground elevation at the nearest edge of the flood extent, smoothed (75 m, or 500 m on the broad Brays floodplain), minus USGS 3DEP 5 m bare-earth elevation.",
- "generatedAt": "2026-11-15T09:25:21+00:00"
+ "terrain": {
+  "source": "Vexcel DTM (2025 aerial survey, ~2.4 m) fused with USGS 3DEP lidar: Vexcel where it agrees with the lidar within 1 m after removing its +0.27 m offset, lidar on water, under buildings and dense canopy",
+  "vexcelShare": 0.915,
+  "vexcelCoverage": 1.0,
+  "vexcelOffsetM": 0.27,
+  "vexcelMinus3depP90AbsM": 0.88
+ },
+ "method": "FwDET (Cohen et al. 2018): water surface from the ground elevation at the nearest edge of the flood extent, smoothed (75 m, or 500 m on the broad Brays floodplain), minus the bare-earth elevation (Vexcel DTM (2025 aerial survey, ~2.4 m) fused with USGS 3DEP lidar: Vexcel where it agrees with the lidar within 1 m after removing its +0.27 m offset, lidar on water, under buildings and dense canopy).",
+ "generatedAt": "2026-11-15T11:23:19+00:00"
 }

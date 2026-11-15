@@ -1,21 +1,21 @@
 {
  "scenario": "downtown",
  "radiusM": 250,
- "buildings": 839,
- "flooded": 239,
+ "buildings": 740,
+ "flooded": 310,
  "byZone": {
-  "high": 114,
-  "medium": 56,
-  "low": 69,
-  "dry": 600
+  "high": 188,
+  "medium": 67,
+  "low": 55,
+  "dry": 430
  },
- "wetAtVexcelGround": 139,
+ "wetAtVexcelGround": 194,
  "terrainCheck": {
-  "n": 839,
-  "meanDiffFt": 2.48,
-  "meanAbsDiffFt": 2.95,
-  "medianAbsDiffFt": 2.3,
-  "within1Ft": 0.192,
+  "n": 740,
+  "meanDiffFt": 2.43,
+  "meanAbsDiffFt": 3.2,
+  "medianAbsDiffFt": 2.35,
+  "within1Ft": 0.242,
   "note": "Vexcel building ground elevation minus USGS 3DEP 5 m bare earth at the footprint centroid. Vexcel reports whole feet."
  },
  "homes": [
@@ -25,13 +25,13 @@
     -95.367478,
     29.763677
    ],
-   "gridDepthFt": 7.6,
+   "gridDepthFt": 7.8,
    "photo": "houston-downtown-a.jpg",
    "nearestBuilding": {
     "type": "single_family",
     "vexcelGroundM": 17.98,
     "dep3GroundM": 11.43,
-    "gridDepthFt": 4.8,
+    "gridDepthFt": 5.3,
     "padDepthFt": 0.0,
     "heightM": null,
     "stories": null,
@@ -50,8 +50,8 @@
     "type": null,
     "vexcelGroundM": 12.19,
     "dep3GroundM": 11.97,
-    "gridDepthFt": 3.6,
-    "padDepthFt": 2.9,
+    "gridDepthFt": 3.8,
+    "padDepthFt": 3.1,
     "heightM": null,
     "stories": null,
     "areaM2": 144.3
@@ -60,23 +60,23 @@
   {
    "person": "c",
    "start": [
-    -95.372375,
-    29.765668
+    -95.362085,
+    29.763131
    ],
    "gridDepthFt": 0.9,
    "photo": "houston-downtown-c.jpg",
    "nearestBuilding": {
-    "type": null,
+    "type": "commercial",
     "vexcelGroundM": 13.72,
-    "dep3GroundM": 13.47,
-    "gridDepthFt": null,
-    "padDepthFt": null,
+    "dep3GroundM": 12.65,
+    "gridDepthFt": 0.2,
+    "padDepthFt": 0.0,
     "heightM": null,
     "stories": null,
-    "areaM2": 152.6
+    "areaM2": 360.6
    }
   }
  ],
  "source": "Vexcel API 2.0 property elements and ortho imagery (\u00a9 Vexcel Imaging US, Inc.); USGS 3DEP; SafeWay FwDET depth grid",
- "generatedAt": "2026-11-15T10:15:36Z"
+ "generatedAt": "2026-11-15T11:24:13Z"
 }
