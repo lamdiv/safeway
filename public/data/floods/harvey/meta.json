@@ -104,58 +104,65 @@
  ],
  "areaKm2": {
   "flooded": 14.89,
-  "high": 11.65,
-  "medium": 1.95,
-  "low": 1.29
+  "high": 11.11,
+  "medium": 1.9,
+  "low": 1.88
  },
  "areaKm2ByLevel": {
-  "1": 1.295,
-  "2": 0.886,
-  "3": 1.063,
-  "4": 1.103,
-  "5": 1.027,
-  "6": 1.004,
-  "7": 8.511
+  "1": 1.877,
+  "2": 0.907,
+  "3": 0.992,
+  "4": 0.962,
+  "5": 0.96,
+  "6": 1.025,
+  "7": 8.165
  },
- "medianDepthFt": 7.0,
+ "medianDepthFt": 6.8,
  "people": [
   {
    "start": [
-    -95.202522,
+    -95.202478,
     30.047483
    ],
    "destination": [
-    -95.199601,
-    30.050164
+    -95.199331,
+    30.050203
    ],
-   "depthFt": 4.0
+   "depthFt": 3.6
   },
   {
    "start": [
-    -95.197218,
+    -95.202433,
+    30.04282
+   ],
+   "destination": [
+    -95.197803,
+    30.049271
+   ],
+   "depthFt": 2.0
+  },
+  {
+   "start": [
+    -95.197173,
     30.046628
    ],
    "destination": [
     -95.197803,
     30.049271
    ],
-   "depthFt": 1.2
-  },
-  {
-   "start": [
-    -95.202253,
-    30.04282
-   ],
-   "destination": [
-    -95.198027,
-    30.049465
-   ],
-   "depthFt": 0.7
+   "depthFt": 0.9
   }
  ],
  "extent": {
   "dataset": "FEMA Hurricane Harvey inundation boundaries, Harris County (NAD83)"
  },
- "method": "FwDET (Cohen et al. 2018): water surface from the ground elevation at the nearest edge of the flood extent, smoothed (75 m, or 500 m on the broad Brays floodplain), minus USGS 3DEP 5 m bare-earth elevation.",
- "generatedAt": "2026-11-15T09:25:20+00:00"
+ "terrain": {
+  "source": "Vexcel DTM (2025 aerial survey, ~2.4 m) fused with USGS 3DEP lidar: Vexcel where it agrees with the lidar within 1 m after removing its +0.75 m offset, lidar on water, under buildings and dense canopy",
+  "vexcelShare": 0.729,
+  "vexcelCoverage": 1.0,
+  "vexcelOffsetM": 0.75,
+  "vexcelMinus3depP90AbsM": 3.64
+ },
+ "method": "FwDET (Cohen et al. 2018): water surface from the ground elevation at the nearest edge of the flood extent, smoothed (75 m, or 500 m on the broad Brays floodplain), minus the bare-earth elevation (Vexcel DTM (2025 aerial survey, ~2.4 m) fused with USGS 3DEP lidar: Vexcel where it agrees with the lidar within 1 m after removing its +0.75 m offset, lidar on water, under buildings and dense canopy).",
+ "generatedAt": "2026-11-15T11:23:18+00:00"
 }

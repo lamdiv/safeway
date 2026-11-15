@@ -78,3 +78,46 @@ Vexcel API 2.0 (`https://api.vexcelgroup.com/v2`, key in `.env` as `VEXCEL_API_K
 - **Room numbers and levels:** the 2016 JRR/LAS User Guide, pp. 24–28, via the team's ElevenLabs document.
 - **Stairway 7 (Levels A–3) and the Shapiro Walk entrance:** the published AccessAble survey.
 - **Caveat:** this is the circulation the building documents show, not the official emergency egress plan. The agent says so, and points to 911 and posted signs in a real emergency.
+
+## Terrain: Vexcel DTM fused with USGS 3DEP lidar
+
+`scripts/houston-floods.py` now builds every drill's depth grid on a fused terrain.
+
+- **Source:** Vexcel's bare-earth DTM (`GET /dtm/extract`, 2025 aerial surveys), fetched at zoom 16 (about 2.4 m) and resampled to the 5 m grid.
+- **Why not Vexcel alone:**
+  - Photogrammetric bare earth fails on water: Lake Carnegie reads 21.6 m against 14.9 m.
+  - It also fails under large buildings: Rabinowitz Hall reads 78 m against 62 m.
+  - It is less certain under dense canopy.
+- **The fusion:**
+  1. Remove Vexcel's overall offset from 3DEP: +0.27 m (Brays), +0.31 m (downtown), +0.75 m (Harvey) and +0.86 m (Princeton).
+  2. Use Vexcel wherever it agrees with the lidar within 1 m.
+  3. Keep the lidar elsewhere.
+- **Share of each grid from Vexcel:** Brays 92%, downtown 87%, Harvey 73%, Princeton 55%.
+- **Effect:** flooded areas are unchanged, and median depths shift by 0.1–0.2 ft. The details are in each `meta.json` under `terrain`.
+- **Validation:** no USGS high-water marks fall inside the Kingwood drill area, so the fusion has not been scored against observations there.
+
+The map's "Affected zones" layer now follows the water. Each cell is coloured by the depth of water standing on it at that moment (final depth minus the falling threshold), so zones start in the river channel and spread outwards, green → yellow → red. Ground the water hasn't reached stays clear.
+
+## Sentinel-1 radar: Hurricane Harvey (Kingwood drill)
+
+`scripts/sentinel1-harvey.py` produces `public/data/sentinel1/harvey/`. On the map it is the Layers option "Sentinel-1 radar · 30 Aug 2017", shown for Harvey only.
+
+- **Data:** Copernicus Sentinel-1 radar (ESA), terrain-corrected (RTC, 10 m) by Microsoft Planetary Computer, cropped through its public data API. Radar sees through cloud and rain.
+- **Scenes:** two passes on the same descending orbit (relative orbit 143), so the change isn't a viewing-angle effect:
+  - before: 24 Aug 2017 (`S1A_…_018065_01E54E`);
+  - flood: 30 Aug 2017 (`S1B_…_007169_00CA2C`).
+- **Method:** change detection on VV (5×5 speckle filter).
+  - **Open-water flood:** below −15 dB on 30 Aug and at least 3 dB darker than on 24 Aug.
+  - **Flooding among buildings and trees ("double bounce"):** at least 3 dB brighter, and within 6 m of the nearest permanent water (height above nearest drainage, from the fused terrain).
+  - **Permanent water:** already below −15 dB on 24 Aug.
+  - Otsu's automatic threshold was tried first and rejected, because the flood-day histogram here has no clear water peak.
+- **Result:**
+  - 2.84 km² flagged: 2.51 km² by double bounce and 0.33 km² of open water.
+  - 85% of what the radar flags lies inside the FEMA Harvey outline used by the drill.
+  - The radar confirms 17% of that outline (critical success index 0.17).
+- **Limits:**
+  - Much of the flooding under dense canopy shows neither signal.
+  - Wind-roughened water can look bright.
+  - It is one snapshot (30 Aug, 12:22 UTC), while FEMA's outline is the maximum extent compiled after the event.
+  - So the radar is independent confirmation where it fires, not a complete extent.
+- **Credit:** contains modified Copernicus Sentinel data 2017.

@@ -1,1 +1,29 @@
-<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>SafeWay — Responder</title><link rel="stylesheet" href="/demo/app.css"><link rel="stylesheet" href="/vendor/maplibre-gl.css"></head><body class="responder"><header class="topbar"><div class="brand">◈ SafeWay</div><span class="demo-label">RESPONDER · LIVE TRACKING</span><span id="connection-status" class="connection" style="margin-left:auto">Connecting…</span></header><main class="workspace"><aside class="sidebar"><section><div class="eyebrow">EMERGENCY RESPONSE</div><h1 style="margin-top:10px">Every person.<br>One shared view.</h1><p class="note" style="margin-top:12px">Demo route progress updates live. Real device GPS appears only when the phone has explicitly enabled it.</p></section><section id="responder-connect"><button id="connect" class="primary">Connect responder device</button><p id="connect-error" class="connection-error"></p></section><section id="sos-list"></section><section><div class="eyebrow">CONNECTED RESIDENTS</div><div id="tracking"><p class="note" style="margin-top:15px">Waiting for a connected warning phone.</p></div></section></aside><section class="map-shell"><div id="map" class="map-canvas" aria-label="Live emergency response tracking map"></div><div class="map-heading"><h2 id="map-title">Response area</h2><p id="hazard-status">Waiting for exercise</p></div><div class="map-footer"><span>Live shared location · source labelled on each resident</span><span class="clock" id="clock">00:00</span></div></section></main><div id="toast" class="toast" role="status"></div><script type="module" src="/demo/responder.mjs"></script></body></html>
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><meta name="theme-color" content="#ffffff"><title>SafeWay — Responder</title><link rel="stylesheet" href="/demo/app.css"><link rel="stylesheet" href="/vendor/maplibre-gl.css"></head>
+<body class="responder rx">
+<header class="rx-top">
+ <div class="rx-brand"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2.5 4.5 5.5v6c0 4.6 3.1 8.6 7.5 10 4.4-1.4 7.5-5.4 7.5-10v-6L12 2.5Z" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"/><path d="M8.5 12.2 11 14.6l4.6-5" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"/></svg><span>SafeWay</span><em>Responder</em></div>
+ <div class="rx-scenario"><b id="map-title">Response area</b><span id="hazard-status">Waiting for the drill</span></div>
+ <div class="rx-live"><span id="connection-status" class="rx-chip">Connecting…</span><span class="rx-chip rx-clock" title="Scenario time"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="8.5" fill="none" stroke="currentColor" stroke-width="1.8"/><path d="M12 7.5V12l3 2" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg><span id="clock">00:00</span></span></div>
+</header>
+<main class="rx-main">
+ <aside class="rx-side" aria-label="Rescue coordination">
+  <section id="responder-connect" class="rx-connect">
+   <div class="rx-connect-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2.5 4.5 5.5v6c0 4.6 3.1 8.6 7.5 10 4.4-1.4 7.5-5.4 7.5-10v-6L12 2.5Z" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"/></svg></div>
+   <h1>Rescue coordination</h1>
+   <p>See every resident in the drill, their zone and route, and rescue requests the moment they come in, including people who tell the voice agent they are trapped.</p>
+   <button id="connect" class="rx-btn rx-btn-primary">Connect as responder</button>
+   <p id="connect-error" class="connection-error" role="alert"></p>
+  </section>
+  <section class="rx-stats" aria-label="Summary">
+   <div class="rx-stat" data-kind="trapped"><b id="stat-trapped">0</b><span>Trapped</span></div>
+   <div class="rx-stat" data-kind="open"><b id="stat-open">0</b><span>Open requests</span></div>
+   <div class="rx-stat"><b id="stat-tracking">0</b><span>Tracking</span></div>
+  </section>
+  <section class="rx-section"><header class="rx-section-head"><h2>Rescue requests</h2><span id="sos-count" class="rx-count">0</span></header><div id="sos-list" class="rx-list"></div><p id="sos-empty" class="rx-empty">No open requests. New reports appear here instantly.</p></section>
+  <section class="rx-section"><header class="rx-section-head"><h2>Residents</h2><span id="tracking-count" class="rx-count">0</span></header><div id="tracking" class="rx-list"><p class="rx-empty">Waiting for a connected warning phone.</p></div></section>
+  <p class="rx-foot">Drill data. Route positions are simulated; real device GPS appears only when a phone has turned it on.</p>
+ </aside>
+ <section class="map-shell rx-map"><div id="map" class="map-canvas" aria-label="Live emergency response map"></div></section>
+</main>
+<div id="toast" class="toast" role="status"></div>
+<script type="module" src="/demo/responder.mjs"></script></body></html>

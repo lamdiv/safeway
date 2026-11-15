@@ -16,12 +16,13 @@ precision highp float;
 in vec3 v_data;uniform float u_threshold,u_kind,u_progress,u_time;
 out vec4 color;
 void main(){float wet,depth;
- if(u_kind<.5){depth=v_data.x-u_threshold;wet=smoothstep(-.06,.18,depth)*step(0.,v_data.x);}
+ if(u_kind<.5){depth=v_data.x-u_threshold;wet=smoothstep(-.12,.55,depth)*step(0.,v_data.x);}
  else{depth=2.;float width=(28.+52.*u_progress)/80.;wet=(1.-smoothstep(width-.04,width,abs(v_data.y)))*(1.-smoothstep(u_progress-.008,u_progress+.003,v_data.z));}
+ if(u_kind<.5)wet*=smoothstep(0.,.05,v_data.y)*smoothstep(1.,.95,v_data.y)*smoothstep(0.,.05,v_data.z)*smoothstep(1.,.95,v_data.z);  // fade out at the edge of the depth grid: no hard rectangle
  if(wet<.015)discard;
  float waves=sin(v_data.y*190.+v_data.z*235.-u_time*3.2)+.5*sin(v_data.y*337.-v_data.z*170.+u_time*2.1);
  vec3 shallow=vec3(.16,.62,.76),deep=vec3(.06,.33,.56);vec3 base=mix(shallow,deep,clamp(depth/7.,0.,1.));
- base+=vec3(.06,.11,.12)*pow(max(0.,waves*.65),5.);float alpha=wet*.72;color=vec4(base*alpha,alpha);}`;
+ base+=vec3(.06,.11,.12)*pow(max(0.,waves*.65),5.);float alpha=wet*(u_kind<.5?mix(.34,.8,clamp(depth/4.,0.,1.)):.72);color=vec4(base*alpha,alpha);}`;
 function shader(gl,type,source){const s=gl.createShader(type);gl.shaderSource(s,source);gl.compileShader(s);if(!gl.getShaderParameter(s,gl.COMPILE_STATUS))throw new Error(gl.getShaderInfoLog(s));return s;}
 export class WaterSurface{
  constructor(){this.id='smooth-water';this.type='custom';this.renderingMode='3d';this.enabled=true;this.vertices=[];this.frames=0;}
