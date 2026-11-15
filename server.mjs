@@ -1,5 +1,6 @@
 import https from 'node:https';import {createResponseDemo} from './src/demo/engine.mjs';
 import {reportStore} from './src/monitor-reports.mjs';import {createVexcel} from './src/demo/vexcel.mjs';import {voiceContext,floodStatus,evacuationRoute,signedUrl} from './src/demo/voice-agent.mjs';
+import {databaseConfiguration,databaseHealth,closeDatabase} from './src/database.mjs';
 import http from 'node:http';import {monitoringSnapshot} from './src/monitor.mjs';import {randomBytes} from 'node:crypto';import {readFile,appendFile,mkdir} from 'node:fs/promises';import {resolve,extname,sep} from 'node:path';import {fileURLToPath} from 'node:url';import {createSafeWay} from './src/safeway/engine.mjs';import {planResponse} from './src/demo/response-agent.mjs';import {modelConfiguration} from './src/models.mjs';import {matterportHouston,validateEvidenceManifest,sponsorGaps} from './src/safeway/sponsors.mjs';
 const ROOT=fileURLToPath(new URL('.',import.meta.url)),PUBLIC=resolve(ROOT,'public');
 const MIME={'.html':'text/html; charset=utf-8','.mjs':'application/javascript','.js':'application/javascript','.wasm':'application/wasm','.jpg':'image/jpeg','.jpeg':'image/jpeg','.webp':'image/webp','.woff2':'font/woff2','.css':'text/css','.json':'application/json','.svg':'image/svg+xml','.png':'image/png','.webm':'video/webm','.wav':'audio/wav'};
@@ -55,6 +56,11 @@ export function createServer({engine,operatorToken=process.env.SAFEWAY_OPERATOR_
   if(path.startsWith('/api/operator/')&&session(req)!==localOperatorToken&&!(req.headers.cookie||'').split(';').some(c=>c.trim()==='safeway_operator='+localOperatorToken))return out(res,401,{error:'Operator token required'});
   if(path==='/api/monitor/reports'){if(session(req)!==localOperatorToken&&!(req.headers.cookie||'').split(';').some(c=>c.trim()==='safeway_operator='+localOperatorToken))return out(res,401,{error:'Operator authorization required'});if(!['GET','POST'].includes(req.method))return out(res,405,{error:'GET or POST required'});const input=req.method==='POST'?await body(req):null;const assets=input?JSON.parse(await readFile(resolve(PUBLIC,'data/assets.json'),'utf8')):null;return out(res,200,await reportStore(reportPath,input,assets));}
   if(path==='/api/monitor'&&req.method==='GET')return out(res,200,await monitoringSnapshot(url.searchParams.get('region')||'houston'));
+  if(path==='/api/database'&&req.method==='GET'){
+   if(!isOperator)return out(res,401,{error:'Operator token required'});
+   try{return out(res,200,{...databaseConfiguration(),health:await databaseHealth()});}
+   catch(e){return out(res,503,{...databaseConfiguration(),health:{configured:true,ok:false},error:'Database connection failed'});}
+  }
   if(path==='/api/operator/state'&&req.method==='GET')return out(res,200,engine.operatorState());
   if(path==='/api/operator/control'&&req.method==='POST'){const result=engine.control(await body(req));if(journal){const history=engine.exportHistory();exportQueue=exportQueue.then(async()=>{await mkdir(resolve(ROOT,'data/runtime'),{recursive:true});await import('node:fs/promises').then(fs=>fs.writeFile(resolve(ROOT,'data/runtime/safeway-history.json'),JSON.stringify(history,null,2)));}).catch(()=>{});}return out(res,200,result);}
   if(path==='/api/operator/invites'&&req.method==='POST')return out(res,200,{invites:engine.inviteLinks()});
@@ -77,7 +83,7 @@ export function createServer({engine,operatorToken=process.env.SAFEWAY_OPERATOR_
   res.writeHead(200,{'Content-Type':MIME[extname(local)]||'application/octet-stream'});res.end(req.method==='HEAD'?undefined:data);
  }catch(e){out(res,e.status||400,{error:e.message||'Invalid request'});}};
  const server=tls?https.createServer(tls,handler):http.createServer(handler);
- server.on('close',()=>{engine.close();if(ownsDemo)demo.close();});return {server,engine,demo};
+ server.on('close',()=>{engine.close();if(ownsDemo)demo.close();void closeDatabase();});return {server,engine,demo};
 }
 if(process.argv[1]&&resolve(process.argv[1])===fileURLToPath(import.meta.url)){
  const host=process.env.HOST||'127.0.0.1';if(!['127.0.0.1','localhost','::1'].includes(host)&&!process.env.SAFEWAY_OPERATOR_TOKEN)throw new Error('Set SAFEWAY_OPERATOR_TOKEN before exposing the server to your LAN.');
