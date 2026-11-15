@@ -34,16 +34,17 @@ function buildingWater(state){
 /** Start with the resident's authoritative instruction; standby must not invent an emergency. */
 function safetyOpening(state){
  const g=state.person?.guidance;
- if(state.mode==='ready'||!g)return 'Simulation standby. There is no active evacuation instruction for you. I can help you prepare.';
+ if(state.mode==='ready'||!g)return 'On standby. There is no active evacuation instruction for you. I can help you prepare.';
  const eta=g.etaSeconds;
- const arrival=eta==null?'':eta<=0?' The simulated flood has reached your location.':` Estimated flood arrival is ${Math.max(1,Math.round(eta))} scenario seconds.`;
- return 'Simulation warning. '+g.instruction+arrival;
+ const arrival=eta==null?'':eta<=0?' The flood has reached your location on the map.':` Estimated flood arrival is ${Math.max(1,Math.round(eta))} scenario seconds.`;
+ const instruction=g.instruction.replace(/\b(?:in|for) this (?:drill|simulation)\b/gi,'').replace(/\b(?:demo|simulated)\s+/gi,'').replace(/\s+([.,])/g,'$1');
+ return instruction+arrival;
 }
 
 /** Values the agent's prompt is filled with when the conversation starts. */
 export function voiceContext(state){
  const p=state.person||{},g=p.guidance||{},b=state.scenario?.building;
- return {safety_message:safetyOpening(state),person_name:p.name==='You'?'there':p.name||'there',scenario:[state.scenario?.title,state.scenario?.variant].filter(Boolean).join(' · ')||'flood drill',
+ return {safety_message:safetyOpening(state),person_name:p.name==='You'?'there':p.name||'there',scenario:[state.scenario?.title,state.scenario?.variant].filter(Boolean).join(' · ')||'your area',
   place:state.scenario?.place||state.scenario?.title||'',building:isPrinceton(state)&&b?b.name:'none',in_building:isPrinceton(state),
   zone:ZONE[p.zone]||p.zone||'unknown',action:g.action||'monitor',destination:p.destination?.name||'the assembly point',drill_running:state.mode==='running'};
 }
@@ -90,7 +91,7 @@ function findRoom(G,text){const s=String(text??'').toUpperCase();if(!s)return nu
 /** Agent definition (prompt, first message, client tools). scripts/elevenlabs-agent.mjs creates or updates it. */
 export function agentDefinition(){
  const prompt=`# Who you are
-You are SafeWay, a calm two-way voice line for people caught in a flood drill. This is always a SIMULATION unless the caller says there is a real emergency. Name the selected scenario rather than calling every session a generic flood drill. In the opening, say this is a simulation once, then focus on the caller and live guidance. Never describe a modeled event as a confirmed real emergency. You speak to {{person_name}} in the drill "{{scenario}}" at {{place}}.
+You are SafeWay, a calm two-way voice line for people caught in a flood drill. This is always a SIMULATION unless the caller says there is a real emergency. Name the selected scenario rather than calling every session a generic flood drill. Do not announce or repeat the words "simulation", "simulated", "drill" or "demo" in routine spoken guidance or the opening. These are internal metadata, not a script to read aloud. Focus on the caller, safety instruction, destination and timing. If directly asked whether the event is real, answer honestly that the data describes an exercise; never claim it is a verified live emergency. Never describe a modeled event as a confirmed real emergency. You speak to {{person_name}} in the drill "{{scenario}}" at {{place}}.
 Their zone: {{zone}}. Current action: {{action}}. Destination: {{destination}}. Building: {{building}}.
 
 # What you do
@@ -103,7 +104,7 @@ Their zone: {{zone}}. Current action: {{action}}. Destination: {{destination}}. 
 # Rules
 - The selected scenario and place above are authoritative. Use the Rabinowitz/Princeton knowledge only when Building is not none. For Rasuwa or Houston, never introduce Princeton, Rabinowitz, its rooms or Stairway 7. Use the live route tool for the selected scenario.
 - Short sentences for speech. Calm. Never more than two sentences before letting them talk.
-- Never invent routes, stairs, exits or rooms. Use only what the tools return. If no route, say: "I can't confirm a route from there in this drill. I'm telling the responder."
+- Never invent routes, stairs, exits or rooms. Use only what the tools return. If no route, say: "I can't confirm a route from there. I'm telling the responder."
 - Flood safety: never walk or drive through moving water; in a building, go up, not down.
 - Real emergency: stop the drill, tell them to call 911 with the building, floor and nearest room, and follow emergency personnel.`;
  const t=(name,description,properties={},required=[])=>({type:'client',name,description,expects_response:true,response_timeout_secs:10,parameters:{type:'object',properties,required}});
@@ -114,7 +115,7 @@ Their zone: {{zone}}. Current action: {{action}}. Destination: {{destination}}. 
    t('get_flood_status','Live flood drill status for this caller: zone, when water arrives, what to do, destination, and the water level at their building.'),
    t('get_evacuation_route','Step-by-step way out. In Rabinowitz Hall it needs the floor and room or sign. Pass any blockage the caller reports.',{floor:str('Floor or level the caller is on, e.g. "2", "Level A", "third floor"'),location:str('Room number or sign they can see, e.g. "Room 200", "Economics Common Room"'),blockage:str('Anything blocked: stairs, exit, water in the hallway')}),
    t('report_trapped','Send the caller\'s situation to the human responder as a rescue request. Use when they are trapped, injured, blocked, or ask for help.',{trapped:{type:'boolean',description:'True if they cannot get out safely'},floor:str('Floor or level'),location:str('Room number, sign or landmark'),people:{type:'number',description:'How many people are with them, including the caller'},injuries:str('Injuries, or "none"'),water:str('Water they can see, e.g. "ankle deep in the hallway"'),canMove:{type:'boolean',description:'Whether they can walk'},notes:str('Anything else the responder should know')},['trapped'])],
-  dynamicVariables:{safety_message:'Simulation standby. No active evacuation instruction is available. Ask for the current status before moving.',person_name:'there',scenario:'flood drill',place:'',zone:'unknown',action:'monitor',destination:'the assembly point',building:'none'}};
+  dynamicVariables:{safety_message:'On standby. No active evacuation instruction is available. Ask for the current status before moving.',person_name:'there',scenario:'your area',place:'',zone:'unknown',action:'monitor',destination:'the assembly point',building:'none'}};
 }
 
 /** Signed WebSocket URL for one conversation, so the browser never sees the API key. */
