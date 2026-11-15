@@ -17,3 +17,9 @@ Earlier source-monitoring, AI and sponsor functionality is retained outside the 
 83 unit/API tests pass. Both scenarios pass three-context browser transport checks with nonzero incoming RTP bytes, decoded audio energy and remote waveform amplitude, complete spoken calls, consented GPS, simulated route movement, responder SOS acknowledgement, arrival and Stop Sharing. The transport test isolates the maps to avoid software-rendering contention; the separate visual test uses the actual OSM renderer and verifies full-height 3D flood/fire layers, Nepal terrain, and desktop/mobile layout. Syntax and production build checks pass. These checks do not certify connectivity between physical phones on an isolated guest network.
 
 The generated private LAN HTTPS trigger and warning-phone URL were also verified against the running service: localhost dashboard caller → private HTTPS trigger → automatic HTTPS-phone ring → nonzero decoded WebRTC speech. The browser accepted the local certificate for this check. Physical-device connectivity still depends on the Wi-Fi/hotspot allowing peers.
+
+## Intermittent call fix
+
+Fixed early-answer offer preparation, a blocking silent-playback unlock, competing dashboard callers, stale SDP/ICE/status updates and dropped signaling requests. A caller lease and attempt generation now isolate each connection. Connection failures retry automatically up to three attempts, while intentional end/reset/sharing revocation cannot restart audio. An unarmed dashboard cannot steal a call from an armed caller.
+
+88 unit/API tests pass. Eight consecutive browser calls passed with real decoded speech under fast answering, two dashboards, signaling failures, a forced peer loss and a closed caller tab. The existing full flood/fire workflow also passed. Run `npm run qa:calls` for the reliability checks.

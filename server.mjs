@@ -23,8 +23,9 @@ export function createServer({engine,operatorToken=process.env.SAFEWAY_OPERATOR_
    if(path==='/api/demo/control'||path==='/api/demo/trigger'){post();const triggerAuthorized=path==='/api/demo/trigger'&&triggerToken&&(url.searchParams.get('key')===triggerToken||req.headers['x-demo-key']===triggerToken);if(!triggerAuthorized)admin();const input=await body(req);if(path.endsWith('/trigger')){if(input.scenario)demo.control({action:'scenario',scenario:input.scenario});return out(res,200,demo.control({action:'start'}));}return out(res,200,demo.control(input));}
    if(path==='/api/demo/action'){post();return out(res,200,demo.deviceAction(bearer,await body(req)));}
    if(path==='/api/demo/location'){post();return out(res,200,demo.location(bearer,await body(req)));}
+   if(path==='/api/demo/call/claim'){post();admin();return out(res,200,demo.claim(await body(req)));}
    if(path==='/api/demo/call'){post();return out(res,200,demo.callAction(bearer,await body(req),isOperator));}
-   if(path==='/api/demo/signals'){if(req.method==='GET')return out(res,200,demo.poll(bearer,Number(url.searchParams.get('after'))||0,isOperator));post();return out(res,200,demo.signal(bearer,await body(req),isOperator));}
+   if(path==='/api/demo/signals'){if(req.method==='GET')return out(res,200,demo.poll(bearer,Number(url.searchParams.get('after'))||0,isOperator,url.searchParams.get('callerId')));post();return out(res,200,demo.signal(bearer,await body(req),isOperator));}
    if(path==='/api/demo/sos/ack'){post();return out(res,200,demo.acknowledge(bearer,await body(req),isOperator));}
    return out(res,404,{error:'Unknown demo endpoint'});
   }
