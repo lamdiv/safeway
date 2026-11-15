@@ -37,8 +37,9 @@ export function createServer({engine,operatorToken=process.env.SAFEWAY_OPERATOR_
    if(path==='/api/demo/state'&&req.method==='GET')return out(res,200,isOperator?demo.operatorState():demo.deviceState(bearer));
    if(path==='/api/demo/control'||path==='/api/demo/trigger'){post();const triggerAuthorized=path==='/api/demo/trigger'&&triggerToken&&(url.searchParams.get('key')===triggerToken||req.headers['x-demo-key']===triggerToken);if(!triggerAuthorized)admin();const input=await body(req);if(path.endsWith('/trigger')){if(input.scenario)demo.control({action:'scenario',scenario:input.scenario});return out(res,200,demo.control({action:'start'}));}return out(res,200,demo.control(input));}
    // Two-way voice agent (ElevenLabs). The phone gets a signed session URL; the agent's tools come back here.
-   if(path==='/api/demo/voice/session'){post();const st=demo.deviceState(bearer);if(!st.person||st.person.status==='standby'&&!st.active)throw Object.assign(new Error('This phone is not in the current drill'),{status:409});return out(res,200,{signedUrl:await signedUrl(),dynamicVariables:voiceContext(st)});}
-   if(path==='/api/demo/voice/tool'){post();const input=await body(req),st=demo.deviceState(bearer),p=input.params||{};
+   if(path==='/api/demo/voice/status'){post();return out(res,200,demo.setVoiceStatus(bearer,await body(req)));}
+   if(path==='/api/demo/voice/session'){post();const st=demo.voiceState(bearer);return out(res,200,{signedUrl:await signedUrl(),dynamicVariables:voiceContext(st)});}
+   if(path==='/api/demo/voice/tool'){post();const input=await body(req),st=demo.voiceState(bearer),p=input.params||{};
     if(input.name==='get_flood_status')return out(res,200,floodStatus(st));
     if(input.name==='get_evacuation_route')return out(res,200,evacuationRoute(st,p));
     if(input.name==='report_trapped')return out(res,200,demo.voiceReport(bearer,{report:p}));

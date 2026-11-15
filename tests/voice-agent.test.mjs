@@ -38,7 +38,17 @@ test('Houston: flood status and the route to the assembly point come from the li
 });
 test('Agent definition: three client tools, and sessions need our server',async()=>{
  const a=agentDefinition();assert.deepEqual(a.tools.map(t=>t.name),['get_flood_status','get_evacuation_route','report_trapped']);assert.ok(a.tools.every(t=>t.type==='client'));
- assert.match(a.prompt,/go up, not down/);assert.match(a.prompt,/Never invent routes/);
+ assert.match(a.firstMessage,/\{\{scenario\}\}/);assert.doesNotMatch(a.firstMessage,/This is a flood drill/);assert.match(a.firstMessage,/^\{\{safety_message\}\}/);assert.match(a.prompt,/go up, not down/);assert.match(a.prompt,/Never invent routes/);
  await assert.rejects(signedUrl({key:'',agentId:'x'}),e=>e.status===503);await assert.rejects(signedUrl({key:'k',agentId:''}),e=>e.status===503);
  const url=await signedUrl({key:'k',agentId:'a1',fetchImpl:async(u,init)=>{assert.equal(init.headers['xi-api-key'],'k');assert.match(u,/agent_id=a1/);return new Response(JSON.stringify({signed_url:'wss://x'}));}});assert.equal(url,'wss://x');
+});
+
+test('Voice opens with live resident guidance and scenario ETA, without inventing a standby warning',()=>{
+ const {d,token}=drill('houston','houston-a',2),state=d.deviceState(token),context=voiceContext(state);
+ assert.ok(context.safety_message.includes(state.person.guidance.instruction));
+ if(state.person.guidance.etaSeconds>0)assert.ok(context.safety_message.includes(Math.round(state.person.guidance.etaSeconds)+' scenario seconds'));
+ const standby=voiceContext({...state,mode:'ready',person:{...state.person,guidance:null}});
+ assert.match(standby.safety_message,/standby/);assert.doesNotMatch(standby.safety_message,/Leave now/);
+ const withdrawn=voiceContext({...state,person:{...state.person,guidance:{instruction:'Route withdrawn. Remain in the defined refuge.',etaSeconds:0,routeWithdrawn:true}}});
+ assert.match(withdrawn.safety_message,/Route withdrawn/);assert.doesNotMatch(withdrawn.safety_message,/Follow the marked/);d.close();
 });

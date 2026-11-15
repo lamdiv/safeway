@@ -1,36 +1,46 @@
-// Warning phone ↔ SafeWay voice agent (ElevenLabs). Two-way: the resident speaks, the agent answers from the
-// live drill and the building guide, and can file a "trapped" report to the responder. The phone asks our
-// server for a signed session URL (the API key stays on the server); the agent's tools call back to the server.
+// Direct two-way conversation. Browser mic consent is obtained from the initial Connect gesture.
 import {$,api} from './common.mjs';
-
-let conversation=null,starting=false;
+let conversation=null,starting=false,generation=0,micGranted=false,lastUpdate=null;
 const TOOL_LABEL={get_flood_status:'Checked the live flood',get_evacuation_route:'Looked up the way out',report_trapped:'Sent your report to the responder'};
-
-function log(role,text){const li=document.createElement('li');li.className='voice-line '+role;const who=document.createElement('b');who.textContent=role==='user'?'You':role==='tool'?'SafeWay ✓':'SafeWay';const t=document.createElement('span');t.textContent=text;li.append(who,t);const list=$('#voice-log');list.append(li);while(list.children.length>12)list.firstElementChild.remove();li.scrollIntoView({block:'nearest'});}
+function log(role,text){const li=document.createElement('li');li.className='voice-line '+role;const who=document.createElement('b');who.textContent=role==='user'?'You':role==='tool'?'SafeWay ✓':'SafeWay';const t=document.createElement('span');t.textContent=text;li.append(who,t);const list=$('#voice-log');list.append(li);while(list.children.length>12)list.firstElementChild.remove();}
 function status(text,mode){$('#voice-status').textContent=text;$('#voice-agent').dataset.mode=mode||'';}
-function setLive(live){$('#voice-start').hidden=live;$('#voice-end').hidden=!live;$('#voice-agent').classList.toggle('live',live);}
-
-/** Start a conversation. `getToken` returns the phone's device token; `onReport` refreshes the phone after a report. */
-export async function startVoice({getToken,onReport,muteWarningCall}){
- if(conversation||starting)return;starting=true;$('#voice-start').disabled=true;status('Connecting to SafeWay…','connecting');
- try{
-  if(!isSecureContext)throw new Error('Talking needs HTTPS (open the phone link on the https:// port).');
-  await navigator.mediaDevices.getUserMedia({audio:true}).then(s=>s.getTracks().forEach(t=>t.stop()));  // ask for the mic first, with a clear prompt
-  const [{Conversation},session]=await Promise.all([import('/vendor/elevenlabs-client.mjs'),api('voice/session',{token:getToken(),data:{}})]);
-  const tool=name=>async params=>{
-   try{const r=await fetch('/api/demo/voice/tool',{method:'POST',headers:{'Content-Type':'application/json',Authorization:'Bearer '+getToken()},body:JSON.stringify({name,params}),signal:AbortSignal.timeout(8000)});
-    const data=await r.json();if(!r.ok)return 'Tool error: '+(data.error||r.status);log('tool',TOOL_LABEL[name]+(name==='report_trapped'?(data.responders?` · ${data.responders} responder online`:' · responder will see it on the dashboard'):''));if(name==='report_trapped')onReport?.(data);return JSON.stringify(data);}
-   catch(e){return 'Tool unavailable: '+e.message;}};
-  muteWarningCall?.(true);
-  conversation=await Conversation.startSession({signedUrl:session.signedUrl,connectionType:'websocket',dynamicVariables:session.dynamicVariables,
-   clientTools:{get_flood_status:tool('get_flood_status'),get_evacuation_route:tool('get_evacuation_route'),report_trapped:tool('report_trapped')},
-   onConnect:()=>{setLive(true);status('Connected · speak any time','listening');},
-   onDisconnect:()=>{conversation=null;setLive(false);muteWarningCall?.(false);status('Conversation ended. Tap to talk again.','');},
-   onError:e=>{status('Voice error: '+(e?.message||e),'error');},
-   onModeChange:({mode})=>status(mode==='speaking'?'SafeWay is speaking…':'Listening…',mode),
-   onMessage:m=>{if(m?.message)log(m.source==='user'||m.role==='user'?'user':'ai',m.message);}});
- }catch(e){status(e.name==='NotAllowedError'?'Microphone blocked. Allow the microphone to talk to SafeWay.':e.message,'error');conversation=null;setLive(false);muteWarningCall?.(false);}
- finally{starting=false;$('#voice-start').disabled=false;}
+function setLive(live){$('#voice-start').hidden=live||starting;$('#voice-end').hidden=!(live||starting);$('#voice-end').textContent=starting?'Cancel connection':'End conversation';$('#voice-agent').classList.toggle('live',live);}
+export async function prepareVoice(){
+ if(!isSecureContext)throw new Error('Open the HTTPS phone link to enable the microphone.');
+ if(!navigator.mediaDevices?.getUserMedia)throw new Error('This browser cannot access a microphone. Open the HTTPS link in Safari or Chrome.');
+ const stream=await navigator.mediaDevices.getUserMedia({audio:true});stream.getTracks().forEach(track=>track.stop());micGranted=true;
 }
-export async function endVoice(){const c=conversation;conversation=null;try{await c?.endSession();}catch{}setLive(false);}
+async function client(){try{return await import('/vendor/elevenlabs-client.mjs');}catch{throw new Error('Voice components could not load. Restart the app with npm run dev and refresh this page.');}}
+export async function startVoice({getToken,onReport,muteWarningCall,onState=()=>{}}){
+ if(conversation||starting)return false;
+ const current=++generation;starting=true;$('#voice-start').disabled=true;$('#voice-start').hidden=true;status('Connecting your conversation…','connecting');setLive(false);
+ const report=s=>api('voice/status',{token:getToken(),data:{status:s}}).catch(()=>{});
+ try{
+  if(!micGranted)await prepareVoice();
+  if(current!==generation)return false;
+  await report('connecting');
+  const [{Conversation},session]=await Promise.all([client(),api('voice/session',{token:getToken(),data:{},signal:AbortSignal.timeout(20000)})]);
+  if(current!==generation)return false;
+  const tool=name=>async params=>{try{const data=await api('voice/tool',{token:getToken(),data:{name,params}});log('tool',TOOL_LABEL[name]+(name==='report_trapped'?(data.responders?' · responder online':' · report queued'):''));if(name==='report_trapped')onReport?.(data);return JSON.stringify(data);}catch(e){return 'Tool unavailable: '+e.message;}};
+  muteWarningCall?.(true);
+  const result=await Conversation.startSession({signedUrl:session.signedUrl,connectionType:'websocket',dynamicVariables:session.dynamicVariables,
+   clientTools:{get_flood_status:tool('get_flood_status'),get_evacuation_route:tool('get_evacuation_route'),report_trapped:tool('report_trapped')},
+   onConnect:()=>{if(current!==generation)return;status('Listening · speak naturally','listening');$('#voice-end').hidden=false;onState('connected');report('connected');},
+   onDisconnect:()=>{if(current!==generation)return;conversation=null;starting=false;setLive(false);status('Conversation ended. Reconnect when ready.','');muteWarningCall?.(false);onState('ended');report('ended');},
+   onError:error=>{if(current!==generation)return;status(error?.message||'Voice connection interrupted','error');onState('error');report('error');},
+   onModeChange:({mode})=>{if(current===generation)status(mode==='speaking'?'SafeWay is speaking…':'Listening · speak naturally',mode);},
+   onMessage:message=>{if(current===generation&&message?.message)log(message.source==='user'||message.role==='user'?'user':'ai',message.message);},
+  });
+  if(current!==generation){await result.endSession();return false;}
+  conversation=result;starting=false;setLive(true);return true;
+ }catch(error){if(current===generation){status(error.name==='NotAllowedError'?'Microphone blocked. Allow microphone access, then reconnect.':error.message,'error');conversation=null;starting=false;setLive(false);muteWarningCall?.(false);onState('error');report('error');}return false;}
+ finally{if(current===generation){starting=false;$('#voice-start').disabled=false;setLive(!!conversation);}}
+}
+export function updateVoiceState(state){
+ if(!conversation)return;const g=state.person?.guidance,key=state.runId+':'+state.mode+':'+(g?.revision||0);if(key===lastUpdate)return;lastUpdate=key;
+ const update={drill:state.mode,zone:g?.zone,action:g?.action,instruction:g?.instruction,etaSeconds:g?.etaSeconds,routeWithdrawn:g?.routeWithdrawn,rescueRequested:!!state.sos};
+ try{conversation.sendContextualUpdate('Current authoritative drill guidance: '+JSON.stringify(update));if(g?.routeWithdrawn)conversation.sendUserMessage('The current drill route was withdrawn. Relay the updated authoritative guidance immediately: '+g.instruction);}catch{}
+}
+export async function endVoice(){generation++;starting=false;lastUpdate=null;const previous=conversation;conversation=null;try{await previous?.endSession();}catch{}setLive(false);status('Conversation ended. Reconnect when ready.','');$('#voice-start').disabled=false;}
 export const voiceActive=()=>!!conversation;
+export const voiceStarting=()=>starting;
