@@ -45,7 +45,7 @@ test('Agent definition: three client tools, and sessions need our server',async(
 
 test('Voice opens with live resident guidance and scenario ETA, without inventing a standby warning',()=>{
  const {d,token}=drill('houston','houston-a',2),state=d.deviceState(token),context=voiceContext(state);
- assert.ok(context.safety_message.includes(state.person.guidance.instruction));
+ assert.doesNotMatch(context.safety_message,/\b(simulation|simulated|drill|demo)\b/i);assert.ok(context.safety_message.includes(state.person.destination.name)||state.person.guidance.routeWithdrawn);
  if(state.person.guidance.etaSeconds>0)assert.ok(context.safety_message.includes(Math.round(state.person.guidance.etaSeconds)+' scenario seconds'));
  const standby=voiceContext({...state,mode:'ready',person:{...state.person,guidance:null}});
  assert.match(standby.safety_message,/standby/);assert.doesNotMatch(standby.safety_message,/Leave now/);
