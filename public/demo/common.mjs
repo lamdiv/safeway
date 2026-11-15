@@ -1,0 +1,5 @@
+export const $=s=>document.querySelector(s),escape=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+export async function api(path,{data,token,method,signal}={}){const r=await fetch('/api/demo/'+path,{method:method||(data?'POST':'GET'),headers:{...(data?{'Content-Type':'application/json'}:{}),...(token?{Authorization:'Bearer '+token}:{})},...(data?{body:JSON.stringify(data)}:{}),cache:'no-store',signal:signal||AbortSignal.timeout(6000)});const result=await r.json();if(!r.ok)throw Object.assign(new Error(result.error||'Request failed'),{status:r.status});return result;}
+export function toast(message){$('#toast').textContent=message;clearTimeout(toast.timer);toast.timer=setTimeout(()=>$('#toast').textContent='',5000);}
+export const clock=s=>`${String(Math.floor(s/60)).padStart(2,'0')}:${String(Math.floor(s%60)).padStart(2,'0')}`;
+export const labels={monitoring:'Monitoring',at_risk:'At risk',calling:'Calling',in_call:'On call',evacuating:'Moving',arrived:'Arrived',needs_help:'SOS',standby:'Standby'};
