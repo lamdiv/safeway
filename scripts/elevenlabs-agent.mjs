@@ -3,7 +3,7 @@
 // "Julis Romo Rabinowitz Building" document plus a SafeWay drill document generated here.
 // Run: node --env-file=.env scripts/elevenlabs-agent.mjs
 import {readFile,writeFile} from 'node:fs/promises';
-import {agentDefinition,buildingGuide,VOICE_AGENT_NAME} from '../src/demo/voice-agent.mjs';
+import {agentDefinition,buildingGuide,VOICE_AGENT_NAME,voiceConversationSettings} from '../src/demo/voice-agent.mjs';
 
 const KEY=process.env.ELEVENLABS_API_KEY;if(!KEY)throw new Error('ELEVENLABS_API_KEY is not set (.env)');
 const API='https://api.elevenlabs.io/v1';
@@ -29,9 +29,9 @@ for(const d of docs.filter(d=>d.name===DRILL_DOC_NAME))await call('DELETE','/con
 const drill=await call('POST','/convai/knowledge-base/text',{name:DRILL_DOC_NAME,text:drillText});
 const knowledge=[...(team?[{type:'text',name:team.name,id:team.id,usage_mode:'auto'}]:[]),{type:'text',name:DRILL_DOC_NAME,id:drill.id,usage_mode:'auto'}];
 
-const def=agentDefinition();
+const def=agentDefinition(),speech=voiceConversationSettings();
 const config={name:VOICE_AGENT_NAME,tags:['safeway'],
- conversation_config:{agent:{first_message:def.firstMessage,language:'en',dynamic_variables:{dynamic_variable_placeholders:def.dynamicVariables},
+ conversation_config:{turn:speech.turn,vad:speech.vad,agent:{...speech.agent,first_message:def.firstMessage,language:'en',dynamic_variables:{dynamic_variable_placeholders:def.dynamicVariables},
    prompt:{prompt:def.prompt,llm:'gemini-2.5-flash',temperature:0.2,tools:def.tools,knowledge_base:knowledge,rag:{enabled:true,embedding_model:'e5_mistral_7b_instruct',max_documents_length:50000}}},
   tts:{voice_id:VOICE,model_id:'eleven_flash_v2'},conversation:{max_duration_seconds:600}},
  platform_settings:{auth:{enable_auth:true}}};  // sessions only via signed URLs from our server

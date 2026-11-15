@@ -9,6 +9,13 @@ import {readFileSync} from 'node:fs';
 import {thresholdAt} from './raster-flood.mjs';
 
 export const VOICE_AGENT_NAME='SafeWay Flood Responder';
+// Patient turn-taking and background speech filtering for noisy demo rooms.
+// https://elevenlabs.io/docs/eleven-agents/customization/conversation-flow
+export function voiceConversationSettings(){return {
+ turn:{turn_eagerness:'patient',turn_timeout:10,interruption_ignore_terms:['um','uh','hmm','mm-hmm'],merge_with_default_ignore_terms:true},
+ vad:{background_voice_detection:true},
+ agent:{disable_first_message_interruptions:true}
+};}
 const ROOT=new URL('../../',import.meta.url);
 let guideCache;
 export function buildingGuide(){guideCache??=JSON.parse(readFileSync(new URL('public/data/buildings/rabinowitz.json',ROOT)));return guideCache;}
@@ -24,10 +31,19 @@ function buildingWater(state){
  const gap=t-(b.depthFt??0);return {reached:gap<=0,gapFt:Math.max(0,+gap.toFixed(1))};
 }
 
+/** Start with the resident's authoritative instruction; standby must not invent an emergency. */
+function safetyOpening(state){
+ const g=state.person?.guidance;
+ if(state.mode==='ready'||!g)return 'Simulation standby. There is no active evacuation instruction for you. I can help you prepare.';
+ const eta=g.etaSeconds;
+ const arrival=eta==null?'':eta<=0?' The simulated flood has reached your location.':` Estimated flood arrival is ${Math.max(1,Math.round(eta))} scenario seconds.`;
+ return 'Simulation warning. '+g.instruction+arrival;
+}
+
 /** Values the agent's prompt is filled with when the conversation starts. */
 export function voiceContext(state){
  const p=state.person||{},g=p.guidance||{},b=state.scenario?.building;
- return {person_name:p.name==='You'?'there':p.name||'there',scenario:[state.scenario?.title,state.scenario?.variant].filter(Boolean).join(' · ')||'flood drill',
+ return {safety_message:safetyOpening(state),person_name:p.name==='You'?'there':p.name||'there',scenario:[state.scenario?.title,state.scenario?.variant].filter(Boolean).join(' · ')||'flood drill',
   place:state.scenario?.place||state.scenario?.title||'',building:isPrinceton(state)&&b?b.name:'none',in_building:isPrinceton(state),
   zone:ZONE[p.zone]||p.zone||'unknown',action:g.action||'monitor',destination:p.destination?.name||'the assembly point',drill_running:state.mode==='running'};
 }
@@ -74,17 +90,18 @@ function findRoom(G,text){const s=String(text??'').toUpperCase();if(!s)return nu
 /** Agent definition (prompt, first message, client tools). scripts/elevenlabs-agent.mjs creates or updates it. */
 export function agentDefinition(){
  const prompt=`# Who you are
-You are SafeWay, a calm two-way voice line for people caught in a flood drill. This is always a SIMULATION unless the caller says there is a real emergency. You speak to {{person_name}} in the drill "{{scenario}}" at {{place}}.
+You are SafeWay, a calm two-way voice line for people caught in a flood drill. This is always a SIMULATION unless the caller says there is a real emergency. Name the selected scenario rather than calling every session a generic flood drill. In the opening, say this is a simulation once, then focus on the caller and live guidance. Never describe a modeled event as a confirmed real emergency. You speak to {{person_name}} in the drill "{{scenario}}" at {{place}}.
 Their zone: {{zone}}. Current action: {{action}}. Destination: {{destination}}. Building: {{building}}.
 
 # What you do
-1. Find out if they are safe, can move, or are trapped. Ask one short question at a time.
+1. Lead with the current safety instruction and modeled arrival time from the tools, then find out if they can move or are trapped. Never delay urgent guidance to ask introductory questions. In standby do not invent an active hazard. Ask one short question at a time.
 2. Flood questions (how deep, how long, where to go): call get_flood_status and answer from it in one or two sentences. Never invent depths or times.
 3. Getting out: call get_evacuation_route. In Rabinowitz Hall first ask which floor and which room or sign they can see, then pass them. Give ONE step at a time and wait for "done" before the next. If they report a blocked stair, exit or water, call get_evacuation_route again with the blockage.
 4. Trapped, injured, blocked, or the route tool says shouldReportTrapped: call report_trapped with trapped=true, their floor, location, number of people, injuries, water level and whether they can move. Then tell them the responder has their report, and keep them on the line with shelter instructions: go up, never down toward water, stay together, signal from a window.
 5. If they just want help but are not trapped, call report_trapped with trapped=false.
 
 # Rules
+- The selected scenario and place above are authoritative. Use the Rabinowitz/Princeton knowledge only when Building is not none. For Rasuwa or Houston, never introduce Princeton, Rabinowitz, its rooms or Stairway 7. Use the live route tool for the selected scenario.
 - Short sentences for speech. Calm. Never more than two sentences before letting them talk.
 - Never invent routes, stairs, exits or rooms. Use only what the tools return. If no route, say: "I can't confirm a route from there in this drill. I'm telling the responder."
 - Flood safety: never walk or drive through moving water; in a building, go up, not down.
@@ -92,12 +109,12 @@ Their zone: {{zone}}. Current action: {{action}}. Destination: {{destination}}. 
  const t=(name,description,properties={},required=[])=>({type:'client',name,description,expects_response:true,response_timeout_secs:10,parameters:{type:'object',properties,required}});
  const str=d=>({type:'string',description:d});
  return {name:VOICE_AGENT_NAME,prompt,
-  firstMessage:'SafeWay here. This is a flood drill. Are you safe right now, and can you move?',
+  firstMessage:'{{safety_message}} SafeWay here for {{scenario}}. Can you move safely?',
   tools:[
    t('get_flood_status','Live flood drill status for this caller: zone, when water arrives, what to do, destination, and the water level at their building.'),
    t('get_evacuation_route','Step-by-step way out. In Rabinowitz Hall it needs the floor and room or sign. Pass any blockage the caller reports.',{floor:str('Floor or level the caller is on, e.g. "2", "Level A", "third floor"'),location:str('Room number or sign they can see, e.g. "Room 200", "Economics Common Room"'),blockage:str('Anything blocked: stairs, exit, water in the hallway')}),
    t('report_trapped','Send the caller\'s situation to the human responder as a rescue request. Use when they are trapped, injured, blocked, or ask for help.',{trapped:{type:'boolean',description:'True if they cannot get out safely'},floor:str('Floor or level'),location:str('Room number, sign or landmark'),people:{type:'number',description:'How many people are with them, including the caller'},injuries:str('Injuries, or "none"'),water:str('Water they can see, e.g. "ankle deep in the hallway"'),canMove:{type:'boolean',description:'Whether they can walk'},notes:str('Anything else the responder should know')},['trapped'])],
-  dynamicVariables:{person_name:'there',scenario:'flood drill',place:'',zone:'unknown',action:'monitor',destination:'the assembly point',building:'none'}};
+  dynamicVariables:{safety_message:'Simulation standby. No active evacuation instruction is available. Ask for the current status before moving.',person_name:'there',scenario:'flood drill',place:'',zone:'unknown',action:'monitor',destination:'the assembly point',building:'none'}};
 }
 
 /** Signed WebSocket URL for one conversation, so the browser never sees the API key. */
