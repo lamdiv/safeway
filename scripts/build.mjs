@@ -1,5 +1,6 @@
 import {cp,mkdir,rm,readFile,writeFile} from 'node:fs/promises';
-await rm('dist',{recursive:true,force:true});await mkdir('dist',{recursive:true});await cp('public','dist',{recursive:true});await cp('src','dist/src',{recursive:true});
-for(const name of ['agent.mjs','models.mjs','voice.mjs','operations-store.mjs','notifications.mjs'])await rm('dist/src/'+name,{force:true});
-await mkdir('dist/api',{recursive:true});await writeFile('dist/api/config',JSON.stringify({agentAvailable:false,mode:'static-demo',voice:{configured:false},provider:'AWS Bedrock'}));await writeFile('dist/api/operations',JSON.stringify({state:null,persistence:'browser'}));
-console.log('Built static research demo in dist/. Live Bedrock agent remains in the local Node server.');
+await rm('dist',{recursive:true,force:true});await mkdir('dist',{recursive:true});
+for(const dir of ['public','src'])await cp(dir,'dist/'+dir,{recursive:true,filter:source=>!source.includes('/matterport-assets')&&!source.endsWith('/safeway-matterport.mjs')});await mkdir('dist/scripts',{recursive:true});await cp('scripts/run-demo.mjs','dist/scripts/run-demo.mjs');
+await cp('server.mjs','dist/server.mjs');await cp('package-lock.json','dist/package-lock.json');
+const pkg=JSON.parse(await readFile('package.json','utf8'));pkg.scripts={start:'node --env-file-if-exists=.env scripts/run-demo.mjs'};await writeFile('dist/package.json',JSON.stringify(pkg,null,2));
+console.log('Built SafeWay Node application in dist/. API and resident sessions require the Node server; this is not a static hosted demo. Credentials and runtime records are excluded.');

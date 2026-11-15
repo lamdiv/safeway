@@ -1,14 +1,18 @@
 {
-  "name": "headwater",
-  "version": "0.1.0",
+  "name": "safeway",
+  "version": "0.2.0",
   "private": true,
   "type": "module",
   "scripts": {
-    "dev": "node --env-file-if-exists=.env server.mjs",
+    "dev": "node --env-file-if-exists=.env scripts/run-demo.mjs",
     "build": "node scripts/build.mjs",
     "test": "node --test tests/*.test.mjs",
     "check": "node scripts/check.mjs",
-    "start": "node --env-file-if-exists=.env server.mjs"
+    "start": "node --env-file-if-exists=.env scripts/run-demo.mjs",
+    "test:safeway": "node --test tests/safeway.test.mjs",
+    "qa:safeway": "node scripts/safeway-browser-qa.mjs",
+    "qa:response": "node scripts/response-browser-qa.mjs",
+    "qa:calls": "node scripts/call-reliability-qa.mjs"
   },
   "dependencies": {
     "@langchain/aws": "^1.5.2",

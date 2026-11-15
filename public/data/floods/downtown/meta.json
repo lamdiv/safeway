@@ -1,0 +1,163 @@
+{
+ "id": "downtown",
+ "bounds": [
+  [
+   -95.39499999999998,
+   29.782
+  ],
+  [
+   -95.34,
+   29.782
+  ],
+  [
+   -95.34,
+   29.745000000000008
+  ],
+  [
+   -95.39499999999998,
+   29.745000000000008
+  ]
+ ],
+ "size": [
+  1224,
+  948
+ ],
+ "resolutionM": 5,
+ "thresholdsFt": [
+  12,
+  9,
+  7,
+  5.5,
+  4.5,
+  3.5,
+  2.7,
+  2.0,
+  1.4,
+  0.9,
+  0.5,
+  0.0
+ ],
+ "levels": [
+  {
+   "level": 1,
+   "minFt": 0,
+   "maxFt": 1,
+   "color": "#cfe9f6"
+  },
+  {
+   "level": 2,
+   "minFt": 1,
+   "maxFt": 2,
+   "color": "#a3d3ee"
+  },
+  {
+   "level": 3,
+   "minFt": 2,
+   "maxFt": 3,
+   "color": "#72b9e3"
+  },
+  {
+   "level": 4,
+   "minFt": 3,
+   "maxFt": 4,
+   "color": "#4799d3"
+  },
+  {
+   "level": 5,
+   "minFt": 4,
+   "maxFt": 5,
+   "color": "#2b79bf"
+  },
+  {
+   "level": 6,
+   "minFt": 5,
+   "maxFt": 6,
+   "color": "#1d58a2"
+  },
+  {
+   "level": 7,
+   "minFt": 6,
+   "maxFt": null,
+   "color": "#123a78"
+  }
+ ],
+ "zones": [
+  {
+   "zone": "high",
+   "minFt": 3,
+   "maxFt": null,
+   "color": "#d9483b"
+  },
+  {
+   "zone": "medium",
+   "minFt": 1,
+   "maxFt": 3,
+   "color": "#ee9a35"
+  },
+  {
+   "zone": "low",
+   "minFt": 0,
+   "maxFt": 1,
+   "color": "#e8c547"
+  }
+ ],
+ "areaKm2": {
+  "flooded": 4.57,
+  "high": 3.06,
+  "medium": 0.72,
+  "low": 0.8
+ },
+ "areaKm2ByLevel": {
+  "1": 0.796,
+  "2": 0.38,
+  "3": 0.338,
+  "4": 0.275,
+  "5": 0.221,
+  "6": 0.181,
+  "7": 2.381
+ },
+ "medianDepthFt": 6.6,
+ "people": [
+  {
+   "start": [
+    -95.367478,
+    29.763677
+   ],
+   "destination": [
+    -95.368601,
+    29.766605
+   ],
+   "depthFt": 7.6
+  },
+  {
+   "start": [
+    -95.371567,
+    29.760594
+   ],
+   "destination": [
+    -95.370623,
+    29.759423
+   ],
+   "depthFt": 2.5
+  },
+  {
+   "start": [
+    -95.372375,
+    29.765668
+   ],
+   "destination": [
+    -95.373813,
+    29.766097
+   ],
+   "depthFt": 0.9
+  }
+ ],
+ "extent": {
+  "dataset": "FEMA NFHL 0.2% annual-chance (500-year) area",
+  "dfirm": [
+   "48201C"
+  ]
+ },
+ "method": "FwDET (Cohen et al. 2018): water surface from the ground elevation at the nearest edge of the flood extent, smoothed (75 m, or 500 m on the broad Brays floodplain), minus USGS 3DEP 5 m bare-earth elevation.",
+ "generatedAt": "2026-11-15T08:20:31+00:00"
+}
