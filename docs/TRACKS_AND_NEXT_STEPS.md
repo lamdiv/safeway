@@ -9,7 +9,7 @@ Choose Science & Discovery, one main track only. The strongest technical story i
 | Track | Status | Evidence needed |
 |---|---|---|
 | Amazon Practical AI | Prototype has a complete analytical workflow | Show a real user task, reliable recomputation, usable interface and export. |
-| LangChain deepagents | Actual SDK and tools integrated; no live provider run verified without a key | Configure AWS Bedrock credentials and demonstrate actual tool/subagent execution. |
+| LangChain deepagents | Flood Response Agent in the live demo (`src/demo/response-agent.mjs`): `createDeepAgent` with five read-only drill tools, `write_todos` planning and two subagents (risk-analyst, route-checker), capped at 8 model calls. Integration-tested with a scripted model. Bedrock key authenticates, but on 2026-11-15 AWS returned ThrottlingException (daily token quota) so no live run is verified yet. | Run **Plan the response** once the Bedrock quota resets or is raised, and record the trace (plan, subagents, tool runs, tokens) for the demo. |
 | CoStar | Not implemented | Use at least two supplied layers meaningfully on a Houston/LosAngeles case. Do not relabel Nepal public data as sponsor data. |
 | Peri FDE | Not yet eligible | Consult a real qualifying business or student organization during the hackathon; include organization, contact name/role and evidence. Public research is not consultation. |
 | Photon | SIP / ElevenLabs test-call adapter implemented, no live call verified | Configure an eligible Photon line, review detailed sponsor rules and demonstrate a real opt-in test call. Manual exercise contact records alone do not qualify. |

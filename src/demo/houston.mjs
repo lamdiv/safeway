@@ -19,7 +19,7 @@ function scenario(key,id,extra){
  const flood=loadRasterFlood(key),meta=flood.meta,lines=HOUSTON_INSTRUCTIONS[key];
  const people=meta.people.map((p,i)=>({id:IDS[i],name:NAMES[i],start:p.start,route:[p.start,p.destination],destination:{name:POINTS[i],coordinates:p.destination},audio:`/demo/audio/houston-${key}-${'abc'[i]}.wav`,instruction:lines[i]}));
  return {id,title:'Houston',country:'Texas',hazard:'Flood',color:'#4aa8d8',...view(meta),pitch:50,bearing:-18,duration:120,warn:{lead:12,radius:0},zoneText:ZONE_TEXT,
-  raster:{key,url:flood.url,bounds:meta.bounds,size:meta.size,timeline:TIMELINE,frames:flood.frames,thresholdsFt:meta.thresholdsFt,areaKm2:meta.areaKm2,areaKm2ByLevel:meta.areaKm2ByLevel,levels:meta.levels,medianDepthFt:meta.medianDepthFt,method:meta.method,extent:meta.extent},
+  raster:{key,url:flood.url,bounds:meta.bounds,size:meta.size,timeline:TIMELINE,exaggeration:4,frames:flood.frames,thresholdsFt:meta.thresholdsFt,areaKm2:meta.areaKm2,areaKm2ByLevel:meta.areaKm2ByLevel,levels:meta.levels,medianDepthFt:meta.medianDepthFt,method:meta.method,extent:meta.extent},
   flood,instruction:lines[0],people,...extra};
 }
 

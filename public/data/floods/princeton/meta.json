@@ -1,0 +1,152 @@
+{
+ "id": "princeton",
+ "bounds": [
+  [
+   -74.68,
+   40.37200000000003
+  ],
+  [
+   -74.63,
+   40.37200000000003
+  ],
+  [
+   -74.63,
+   40.329999999999984
+  ],
+  [
+   -74.68,
+   40.329999999999984
+  ]
+ ],
+ "size": [
+  1113,
+  1227
+ ],
+ "resolutionM": 5,
+ "thresholdsFt": [
+  156.61,
+  142.37,
+  128.13,
+  113.9,
+  99.66,
+  85.42,
+  71.18,
+  56.95,
+  42.71,
+  28.47,
+  14.24,
+  0.0
+ ],
+ "depthEncoding": "uint16le",
+ "levels": [
+  {
+   "level": 1,
+   "minFt": 0,
+   "maxFt": 1,
+   "color": "#cfe9f6"
+  },
+  {
+   "level": 2,
+   "minFt": 1,
+   "maxFt": 2,
+   "color": "#a3d3ee"
+  },
+  {
+   "level": 3,
+   "minFt": 2,
+   "maxFt": 3,
+   "color": "#72b9e3"
+  },
+  {
+   "level": 4,
+   "minFt": 3,
+   "maxFt": 4,
+   "color": "#4799d3"
+  },
+  {
+   "level": 5,
+   "minFt": 4,
+   "maxFt": 5,
+   "color": "#2b79bf"
+  },
+  {
+   "level": 6,
+   "minFt": 5,
+   "maxFt": 6,
+   "color": "#1d58a2"
+  },
+  {
+   "level": 7,
+   "minFt": 6,
+   "maxFt": null,
+   "color": "#123a78"
+  }
+ ],
+ "zones": [
+  {
+   "zone": "high",
+   "minFt": 3,
+   "maxFt": null,
+   "color": "#d64541"
+  },
+  {
+   "zone": "medium",
+   "minFt": 1,
+   "maxFt": 3,
+   "color": "#f2c12e"
+  },
+  {
+   "zone": "low",
+   "minFt": 0,
+   "maxFt": 1,
+   "color": "#3fae5a"
+  }
+ ],
+ "areaKm2": {
+  "flooded": 17.94,
+  "high": 17.69,
+  "medium": 0.17,
+  "low": 0.09
+ },
+ "areaKm2ByLevel": {
+  "1": 0.085,
+  "2": 0.087,
+  "3": 0.079,
+  "4": 0.082,
+  "5": 0.08,
+  "6": 0.086,
+  "7": 17.445
+ },
+ "medianDepthFt": 73.8,
+ "people": [
+  {
+   "start": [
+    -74.65547,
+    40.34909
+   ],
+   "destination": [
+    -74.66402,
+    40.34917
+   ],
+   "depthFt": 2.0
+  },
+  {
+   "start": [
+    -74.65528,
+    40.34916
+   ],
+   "destination": [
+    -74.66402,
+    40.34917
+   ],
+   "depthFt": 4.9
+  }
+ ],
+ "extent": {
+  "dataset": "Artificial drill flood: water rising out of Lake Carnegie and Stony Brook (OpenStreetMap) over USGS 3DEP elevation (connected-bathtub model)",
+  "waterLevelM": 62.57,
+  "lakeSurfaceM": 14.93
+ },
+ "method": "FwDET (Cohen et al. 2018): water surface from the ground elevation at the nearest edge of the flood extent, smoothed (75 m, or 500 m on the broad Brays floodplain), minus USGS 3DEP 5 m bare-earth elevation.",
+ "generatedAt": "2026-11-15T09:26:17+00:00"
+}

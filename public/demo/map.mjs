@@ -5,6 +5,7 @@ const unmerc=(x,y)=>[x*180/20037508.34,Math.atan(Math.exp(y/6378137))*360/Math.P
 // Houston is flat, so terrain and water heights are exaggerated by the same factor (water stays level).
 export const HOUSTON_EXAGGERATION=4;
 const WATER_BLOCK=6;  // 6 x 5 m grid cells -> one 30 m water column
+const WATER_BANDS=24;  // depth bands, each its own layer with a fixed filter
 const DEPTH_COLORS=['#cfe9f6',1,'#a3d3ee',2,'#72b9e3',3,'#4799d3',4,'#2b79bf',5,'#1d58a2',6,'#123a78'];
 /** Same water-level curve as the server (src/demo/raster-flood.mjs). */
 function thresholdAt(r,time){const {start,step}=r.timeline,t=r.thresholdsFt;if(time<start)return Infinity;const u=(time-start)/step,k=Math.floor(u);if(k>=t.length-1)return t.at(-1);return t[k]+(t[k+1]-t[k])*(u-k);}
@@ -16,83 +17,124 @@ class FloodMapControl{
  onRemove(){}
 }
 
+const LAYERS_ICON='<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round" aria-hidden="true"><path d="M12 3 2 8l10 5 10-5-10-5Z"/><path d="m2 13 10 5 10-5"/><path d="m2 17.5 10 5 10-5"/></svg>';
+// Aerial photos: USGS National Map imagery (public domain) in the US, Esri World Imagery elsewhere.
+const AERIAL={usgs:{tiles:['https://basemap.nationalmap.gov/arcgis/rest/services/USGSImageryOnly/MapServer/tile/{z}/{y}/{x}'],maxzoom:16,attribution:'Imagery: USGS The National Map'},esri:{tiles:['https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}'],maxzoom:18,attribution:'Imagery: Esri, Maxar, Earthstar Geographics'}};
+const PREF_KEY='safeway-map-layers',DEFAULT_PREFS={base:'streets',water:true,zones:true,buildings:true,routes:true};
+// Which user switch controls which map layers.
+const PREF_OF={'buildings-3d':'buildings','flood-zones':'zones','zone-fill':'zones','zone-edge':'zones','hazard-fill':'water','hazard-edge':'water','warning-zone':'water','route-shadow':'routes','route-line':'routes'};
+class LayersControl{
+ constructor(map){this.rm=map;}
+ onAdd(){
+  const el=document.createElement('div');el.className='maplibregl-ctrl maplibregl-ctrl-group layers-ctrl';
+  const b=document.createElement('button');b.type='button';b.className='layers-button';b.title='Map layers';b.setAttribute('aria-label','Map layers');b.setAttribute('aria-expanded','false');b.innerHTML=LAYERS_ICON;
+  const panel=document.createElement('div');panel.className='layers-panel';panel.hidden=true;panel.setAttribute('role','group');panel.setAttribute('aria-label','Map layers');
+  panel.innerHTML='<div class="layers-title">Base map</div><div class="layers-base" role="radiogroup"><button type="button" data-base="streets" role="radio">Streets</button><button type="button" data-base="aerial" role="radio">Aerial</button></div><div class="layers-title">Show</div>'+[['water','Flood water'],['zones','Affected zones'],['buildings','3D buildings'],['routes','Evacuation routes']].map(([k,t])=>`<label><input type="checkbox" data-pref="${k}">${t}</label>`).join('')+'<p class="layers-note" data-note></p>';
+  b.onclick=()=>{panel.hidden=!panel.hidden;b.setAttribute('aria-expanded',String(!panel.hidden));this.sync();};
+  panel.addEventListener('click',e=>{const base=e.target.closest('[data-base]')?.dataset.base;if(base)this.rm.setPrefs({base});});
+  panel.addEventListener('change',e=>{const k=e.target.dataset.pref;if(k)this.rm.setPrefs({[k]:e.target.checked});});
+  el.append(b,panel);this.el=el;this.panel=panel;this.button=b;this.sync();return el;
+ }
+ sync(){if(!this.panel)return;const p=this.rm.prefs;for(const x of this.panel.querySelectorAll('[data-base]'))x.setAttribute('aria-checked',String(x.dataset.base===p.base));for(const x of this.panel.querySelectorAll('[data-pref]'))x.checked=!!p[x.dataset.pref];const s=this.rm.state?.scenario;this.panel.querySelector('[data-note]').textContent=p.base==='aerial'?(s&&s.id!=='rasuwa'?AERIAL.usgs.attribution:AERIAL.esri.attribution):'';}
+ onRemove(){}
+}
+
 // Everything the simulation draws. Hidden while the flood depth map is open.
-const SCENE_LAYERS=['buildings-3d','zone-fill','zone-edge','warning-zone','hazard-fill','hazard-edge','flood-zones','water-3d','flow-line','flow-arrows','route-shadow','route-line'];
+const SCENE_LAYERS=['buildings-3d','zone-fill','zone-edge','warning-zone','hazard-fill','hazard-edge','flood-zones','flow-line','flow-arrows','route-shadow','route-line'];
 // Drawn only once the simulation has started.
 const AFTER_START=['zone-fill','zone-edge','flood-zones','flow-line','flow-arrows'];
 
 export class ResponseMap{
  constructor(container,{compact=false}={}){
   this.container=container;this.markers=new Map();this.destinations=new Map();this.compact=compact;this.hidden=new Map();
+  this.prefs={...DEFAULT_PREFS};if(!compact)try{Object.assign(this.prefs,JSON.parse(localStorage.getItem(PREF_KEY)||'{}'));}catch{}
   this.map=new maplibre.Map({container,style:'https://tiles.openfreemap.org/styles/liberty',center:[85.340,28.171],zoom:13.8,pitch:compact?0:57,bearing:compact?0:-18,canvasContextAttributes:{antialias:true},attributionControl:{compact:true}});
   this.map.addControl(new maplibre.NavigationControl({visualizePitch:true}),'top-right');
-  this.floodControl=new FloodMapControl(()=>this.setFloodMap(!this.floodMode));this.map.addControl(this.floodControl,'top-right');
+  this.floodControl=new FloodMapControl(()=>this.setFloodMap(!this.floodMode));this.map.addControl(this.floodControl,'top-right');if(!compact){this.layersControl=new LayersControl(this);this.map.addControl(this.layersControl,'top-right');}
   this.map.on('click',e=>{if(this.floodMode)this.depthPopup(e.lngLat);});
   this.map.on('load',async()=>{try{
    const tiles=await fetch('/data/terrain-tiles.json').then(r=>r.json());
    this.map.addSource('valley-dem',{type:'raster-dem',tiles:tiles.tiles.map(t=>location.origin+t),tileSize:256,minzoom:12,maxzoom:12,encoding:'terrarium',bounds:tiles.bounds,attribution:'Elevation: Mapzen / SRTM'});
    this.map.addSource('houston-dem',{type:'raster-dem',tiles:['https://s3.amazonaws.com/elevation-tiles-prod/terrarium/{z}/{x}/{y}.png'],tileSize:256,maxzoom:15,encoding:'terrarium',attribution:'Elevation: AWS Terrain Tiles (USGS 3DEP)'});
    const label=this.label=this.map.getStyle().layers.find(l=>l.type==='symbol')?.id;
+   for(const [k,a] of Object.entries(AERIAL)){this.map.addSource('aerial-'+k,{type:'raster',tiles:a.tiles,tileSize:256,maxzoom:a.maxzoom,attribution:a.attribution});this.map.addLayer({id:'aerial-'+k,type:'raster',source:'aerial-'+k,layout:{visibility:'none'},paint:{'raster-fade-duration':150}},label);}
    if(!compact)this.map.addLayer({id:'buildings-3d',type:'fill-extrusion',source:'openmaptiles','source-layer':'building',minzoom:13,paint:{'fill-extrusion-color':'#98a6a7','fill-extrusion-height':['max',5,['to-number',['get','render_height'],5]],'fill-extrusion-opacity':.86}},label);
    for(const id of ['hazard','warning','routes','zones','arrows'])this.map.addSource(id,{type:'geojson',data:empty()});
-   const zoneColor=['match',['get','zone'],'high','#d9483b','medium','#ee9a35','#e8c547'];
+   const zoneColor=['match',['get','zone'],'high','#d64541','medium','#f2c12e','#3fae5a'];
    this.map.addLayer({id:'zone-fill',type:'fill',source:'zones',layout:{visibility:'none'},paint:{'fill-color':zoneColor,'fill-opacity':['match',['get','zone'],'high',.2,'medium',.15,.12]}},label);
    this.map.addLayer({id:'zone-edge',type:'line',source:'zones',layout:{visibility:'none'},paint:{'line-color':zoneColor,'line-width':1.2,'line-opacity':.75}},label);
    this.map.addLayer({id:'warning-zone',type:'line',source:'warning',paint:{'line-color':'#c4845b','line-width':1.5,'line-dasharray':[4,3],'line-opacity':.85}},label);
    this.map.addLayer({id:'hazard-fill',type:'fill',source:'hazard',paint:{'fill-color':'#47b9e4','fill-opacity':.48,'fill-antialias':true}},label);
    this.map.addLayer({id:'hazard-edge',type:'line',source:'hazard',layout:{'line-join':'round','line-cap':'round'},paint:{'line-color':'#77dcf4','line-width':2,'line-opacity':.95}},label);
-   if(!compact){this.map.addSource('water3d',{type:'geojson',data:empty()});this.map.addLayer({id:'water-3d',type:'fill-extrusion',source:'water3d',layout:{visibility:'none'},filter:['>=',['get','d'],999],paint:{'fill-extrusion-color':'#4799d3','fill-extrusion-height':0,'fill-extrusion-base':0,'fill-extrusion-opacity':.84,'fill-extrusion-vertical-gradient':false}},label);}
+   if(!compact)this.map.addSource('water3d',{type:'geojson',data:empty()});
    this.map.addLayer({id:'flow-line',type:'line',source:'arrows',layout:{visibility:'none'},paint:{'line-color':'#0f5f8f','line-width':1.5,'line-opacity':.7,'line-dasharray':[2,2]}});
    this.map.addLayer({id:'flow-arrows',type:'symbol',source:'arrows',layout:{visibility:'none','symbol-placement':'line','symbol-spacing':90,'text-field':'›','text-font':['Noto Sans Bold'],'text-size':26,'text-keep-upright':false,'text-allow-overlap':true,'text-rotation-alignment':'map','text-offset':[0,-.12]},paint:{'text-color':'#0f5f8f','text-halo-color':'#ffffff','text-halo-width':1.5}});
    this.map.addLayer({id:'route-shadow',type:'line',source:'routes',layout:{'line-join':'round','line-cap':'round'},paint:{'line-color':'#fff','line-width':6,'line-opacity':.85}});
    this.map.addLayer({id:'route-line',type:'line',source:'routes',layout:{'line-join':'round','line-cap':'round'},paint:{'line-color':'#168a72','line-width':3}});
-   this.loaded=true;document.getElementById(container).dataset.ready='true';if(this.state)this.update(this.state);
+   this.loaded=true;document.getElementById(container).dataset.ready='true';if(this.state)this.update(this.state);this.setPrefs();
   }catch(e){document.getElementById(container).dataset.error=e.message;}});
  }
 
  /** Show or hide a layer. While the depth map is open, remember the wish and apply it on close. */
- setVisible(id,on){if(!this.map.getLayer(id))return;const v=on?'visible':'none';if(this.floodMode){this.hidden.set(id,v);return;}if(this.map.getLayoutProperty(id,'visibility')!==v)this.map.setLayoutProperty(id,'visibility',v);}
+ setVisible(id,on){if(!this.map.getLayer(id))return;if(PREF_OF[id]&&!this.prefs[PREF_OF[id]])on=false;const v=on?'visible':'none';if(this.floodMode){this.hidden.set(id,v);return;}if(this.map.getLayoutProperty(id,'visibility')!==v)this.map.setLayoutProperty(id,'visibility',v);}
+
+ /** Apply the Layers panel: base map and which overlays show. Saved in this browser. */
+ setPrefs(change={}){
+  Object.assign(this.prefs,change);try{localStorage.setItem(PREF_KEY,JSON.stringify(this.prefs));}catch{}
+  if(this.loaded){
+   const s=this.state?.scenario,us=s&&s.id!=='rasuwa',aerial=this.prefs.base==='aerial';
+   this.setVisible('aerial-usgs',aerial&&us);this.setVisible('aerial-esri',aerial&&!us);
+   this.setVisible('buildings-3d',!this.compact);for(const id of ['route-shadow','route-line'])this.setVisible(id,true);
+   if(this.state)this.update(this.state);this.lastT=null;
+  }
+  this.layersControl?.sync();
+ }
 
  /** Gridded flood (Houston): the affected-zones image and the 3D water built from the depth grid. */
  rasterLayers(r){
   const source=this.map.getSource('flood-zones');
   if(source)source.updateImage({url:r.url+'zones.png',coordinates:r.bounds});
-  else{this.map.addSource('flood-zones',{type:'image',url:r.url+'zones.png',coordinates:r.bounds});this.map.addLayer({id:'flood-zones',type:'raster',source:'flood-zones',layout:{visibility:'none'},paint:{'raster-opacity':.2,'raster-resampling':'linear','raster-fade-duration':0}},this.map.getLayer('water-3d')?'water-3d':this.label);}
+  else{this.map.addSource('flood-zones',{type:'image',url:r.url+'zones.png',coordinates:r.bounds});this.map.addLayer({id:'flood-zones',type:'raster',source:'flood-zones',layout:{visibility:'none'},paint:{'raster-opacity':.2,'raster-resampling':'linear','raster-fade-duration':0}},this.label);}
   if(!this.compact)this.buildWater(r);
  }
 
- /** Turn the depth grid into 30 m water columns. Each column keeps the mean depth of its flooded cells. */
+ /** Turn the depth grid into 30 m water columns (each keeps the mean depth of its flooded cells), split into
+  *  WATER_BANDS layers by depth. Every band has a fixed filter and gets plain-number height and colour each frame:
+  *  a per-feature height formula would make MapLibre reload the whole source on every update. */
  async buildWater(r){
-  const token=this.waterToken=r.key;this.map.getSource('water3d')?.setData(empty());
-  const cells=new Uint8Array(await fetch(r.url+'depth.bin').then(x=>x.arrayBuffer()));if(this.waterToken!==token)return;
-  const [w,h]=r.size,B=WATER_BLOCK,X0=mercX(r.bounds[0][0]),Y1=mercY(r.bounds[0][1]),X1=mercX(r.bounds[2][0]),Y0=mercY(r.bounds[2][1]),dx=(X1-X0)/w,dy=(Y1-Y0)/h,features=[];
+  const token=this.waterToken=r.key;this.waterReady=null;for(const id of this.waterBands||[])if(this.map.getLayer(id))this.map.removeLayer(id);this.waterBands=[];this.map.getSource('water3d')?.setData(empty());
+  const cells=new Uint16Array(await fetch(r.url+'depth.bin').then(x=>x.arrayBuffer()));if(this.waterToken!==token)return;
+  const [w,h]=r.size,B=WATER_BLOCK,X0=mercX(r.bounds[0][0]),Y1=mercY(r.bounds[0][1]),X1=mercX(r.bounds[2][0]),Y0=mercY(r.bounds[2][1]),dx=(X1-X0)/w,dy=(Y1-Y0)/h,features=[];let maxD=0;
   for(let by=0;by<h;by+=B)for(let bx=0;bx<w;bx+=B){
    let n=0,sum=0;for(let y=by;y<Math.min(h,by+B);y++)for(let x=bx;x<Math.min(w,bx+B);x++){const v=cells[y*w+x];if(v){n++;sum+=v-1;}}
    if(n*2<B*B)continue;
-   const xa=X0+bx*dx,xb=X0+Math.min(w,bx+B)*dx,ya=Y1-by*dy,yb=Y1-Math.min(h,by+B)*dy;
-   features.push({type:'Feature',properties:{d:Math.round(sum/n)/10},geometry:{type:'Polygon',coordinates:[[unmerc(xa,ya),unmerc(xb,ya),unmerc(xb,yb),unmerc(xa,yb),unmerc(xa,ya)]]}});
+   const d=Math.round(sum/n)/10,xa=X0+bx*dx,xb=X0+Math.min(w,bx+B)*dx,ya=Y1-by*dy,yb=Y1-Math.min(h,by+B)*dy;maxD=Math.max(maxD,d);
+   features.push({type:'Feature',properties:{d},geometry:{type:'Polygon',coordinates:[[unmerc(xa,ya),unmerc(xb,ya),unmerc(xb,yb),unmerc(xa,yb),unmerc(xa,ya)]]}});
   }
-  this.map.getSource('water3d')?.setData(fc(features));this.waterReady=r.key;this.lastT=null;
+  this.map.getSource('water3d')?.setData(fc(features));
+  const edges=Array.from({length:WATER_BANDS+1},(_,i)=>maxD*i/WATER_BANDS);edges[WATER_BANDS]=Infinity;
+  this.waterBandRanges=edges.slice(0,-1).map((lo,i)=>({id:'water-band-'+i,lo,hi:edges[i+1],mid:Math.min(maxD,(lo+Math.min(maxD,edges[i+1]))/2)}));
+  for(const b of this.waterBandRanges){this.map.addLayer({id:b.id,type:'fill-extrusion',source:'water3d',filter:['all',['>=',['get','d'],b.lo],['<',['get','d'],b.hi]],paint:{'fill-extrusion-color':'#4799d3','fill-extrusion-height':0,'fill-extrusion-base':0,'fill-extrusion-opacity':0,'fill-extrusion-vertical-gradient':false}},this.label);this.waterBands.push(b.id);}
+  this.waterReady=r.key;this.lastT=null;
  }
 
- /** Smooth flood animation: estimate the simulation clock between server updates and redraw the water. */
+ /** Smooth flood animation: estimate the simulation clock between server updates and set each band's water height. */
  animate(){
   if(this.animating)return;this.animating=true;
+  const colour=depth=>{let c=DEPTH_COLORS[0];for(let i=1;i<DEPTH_COLORS.length;i+=2)if(depth>=DEPTH_COLORS[i])c=DEPTH_COLORS[i+1];return c;};
   const frame=()=>{
    const st=this.state,s=st?.scenario,r=s?.raster,live=r&&!this.compact&&this.loaded&&st.mode!=='ready'&&this.waterReady===r.key;
-   if(live){
-    const now=performance.now(),est=Math.min(s.duration,st.elapsed+(st.mode==='running'?(now-this.clockAt)/1000:0));
-    this.estElapsed=Math.max(this.estElapsed??0,est);
-    const T=thresholdAt(r,this.estElapsed);
-    if(T!==Infinity&&(this.lastT===null||Math.abs(T-this.lastT)>.01)&&now-(this.paintedAt??0)>40){
-     const water=['-',['get','d'],T];
-     this.map.setPaintProperty('water-3d','fill-extrusion-height',['*',.3048*HOUSTON_EXAGGERATION,['max',0,water]]);
-     this.map.setPaintProperty('water-3d','fill-extrusion-color',['step',water,...DEPTH_COLORS]);
-     if(this.filterT===undefined||Math.abs(T-this.filterT)>.15){this.map.setFilter('water-3d',['>=',['get','d'],T]);this.filterT=T;}
-     this.lastT=T;this.paintedAt=now;
+   let T=Infinity;
+   if(live){const now=performance.now(),est=Math.min(s.duration,st.elapsed+(st.mode==='running'?(now-this.clockAt)/1000:0));this.estElapsed=Math.max(this.estElapsed??0,est);T=thresholdAt(r,this.estElapsed);}
+   if(T!==this.lastT){
+    const k=.3048*(r?.exaggeration??HOUSTON_EXAGGERATION);
+    for(const b of this.waterBandRanges||[]){
+     // Visibility changes make MapLibre rebuild every tile of the source; opacity is a plain paint value and does not.
+     const on=live&&this.prefs.water&&T!==Infinity&&b.hi>T,depth=Math.max(0,b.mid-T),op=on?.84:0;if(!this.map.getLayer(b.id))continue;if(b.o!==op){this.map.setPaintProperty(b.id,'fill-extrusion-opacity',op);b.o=op;}
+     if(on){const hgt=+Math.min(depth*k,r.maxHeightM??Infinity).toFixed(2);if(b.h!==hgt){this.map.setPaintProperty(b.id,'fill-extrusion-height',hgt);b.h=hgt;}const c=colour(depth);if(b.c!==c){this.map.setPaintProperty(b.id,'fill-extrusion-color',c);b.c=c;}}
     }
+    this.lastT=T;
    }
-   this.setVisible('water-3d',!!live&&this.lastT!==null);
    requestAnimationFrame(frame);
   };
   requestAnimationFrame(frame);
@@ -100,11 +142,11 @@ export class ResponseMap{
 
  applyTerrain(s){
   if(this.compact||this.floodMode||!s){this.map.setTerrain(null);return;}
-  this.map.setTerrain(s.id==='rasuwa'?{source:'valley-dem',exaggeration:1}:s.raster?{source:'houston-dem',exaggeration:HOUSTON_EXAGGERATION}:null);
+  this.map.setTerrain(s.id==='rasuwa'?{source:'valley-dem',exaggeration:1}:s.raster?(s.raster.terrain===false?null:{source:'houston-dem',exaggeration:s.raster.exaggeration??HOUSTON_EXAGGERATION}):s.terrain?{source:'houston-dem',exaggeration:s.terrain.exaggeration}:null);
  }
 
  update(state,{people=state.people||[],routes=true}={}){
-  const prev=this.state;this.state=state;this.clockAt=performance.now();if(!prev||state.elapsed<prev.elapsed-.5||state.mode==='ready'||prev.scenario?.id!==state.scenario?.id){this.estElapsed=state.elapsed;this.lastT=null;this.filterT=undefined;}
+  const prev=this.state;this.state=state;this.clockAt=performance.now();if(!prev||state.elapsed<prev.elapsed-.5||state.mode==='ready'||prev.scenario?.id!==state.scenario?.id){this.estElapsed=state.elapsed;this.lastT=null;}
   if(!this.loaded)return;this.animate();const s=state.scenario,started=state.mode&&state.mode!=='ready';
   if(this.scenario!==s.id){
    this.scenario=s.id;this.applyTerrain(s);
@@ -113,6 +155,7 @@ export class ResponseMap{
    const z=state.zones||{};this.map.getSource('zones').setData(fc(['low','medium','high'].flatMap(k=>(z[k]?.features||[]).map(f=>({...f,properties:{zone:k}})))));
    this.map.getSource('arrows').setData(s.arrows||empty());
    if(s.raster)this.rasterLayers(s.raster);
+   if(this.prefs.base==='aerial')queueMicrotask(()=>this.setPrefs());
    if(this.floodControl.el)this.floodControl.el.hidden=!s.id.startsWith('houston');
    if(this.floodMode&&!s.id.startsWith('houston'))this.setFloodMap(false);
   }
@@ -122,7 +165,7 @@ export class ResponseMap{
   for(const p of people){
    if(routes&&(p.atRisk||p.acknowledged||p.call)&&p.route?.length>1)paths.push({type:'Feature',geometry:{type:'LineString',coordinates:p.route},properties:{}});
    let marker=this.markers.get(p.id);
-   if(!marker){const el=document.createElement('div');el.className='person-marker';el.title=p.name;const i=document.createElement('span');i.textContent=p.name.split(' ').map(n=>n[0]).join('');const tag=document.createElement('span');tag.className='person-tag';el.append(i,tag);marker=new maplibre.Marker({element:el}).setLngLat(p.position).addTo(this.map);this.markers.set(p.id,marker);}
+   if(!marker){const el=document.createElement('div');el.className='person-marker';el.title=p.name;const i=document.createElement('span');i.textContent=p.initials||p.name.split(' ').map(n=>n[0]).join('');const tag=document.createElement('span');tag.className='person-tag';el.append(i,tag);marker=new maplibre.Marker({element:el}).setLngLat(p.position).addTo(this.map);this.markers.set(p.id,marker);}
    marker.setLngLat(p.position);const el=marker.getElement();el.className='person-marker'+(p.atRisk?' risk':'')+(p.acknowledged||p.arrived?' moving':'')+(started&&!this.compact?' tagged':'');
    const tag=el.querySelector('.person-tag');if(tag)tag.textContent=labels[p.status]||'';
    if(p.destination&&!this.destinations.has(p.destination.name)){const el=document.createElement('div');el.className='destination-marker';el.textContent='⚑ '+p.destination.name;this.destinations.set(p.destination.name,new maplibre.Marker({element:el}).setLngLat(p.destination.coordinates).addTo(this.map));}
@@ -138,7 +181,7 @@ export class ResponseMap{
   if(!this.loaded)return;if(on&&!this.state?.scenario?.id?.startsWith('houston'))return;
   this.floodMode=on;this.depthEvent=event;this.floodControl.button?.setAttribute('aria-pressed',String(on));document.getElementById(this.container).classList.toggle('flood-map-mode',on);this.popup?.remove();
   if(on){
-   for(const id of SCENE_LAYERS)if(this.map.getLayer(id)&&!this.hidden.has(id)){this.hidden.set(id,this.map.getLayoutProperty(id,'visibility')||'visible');this.map.setLayoutProperty(id,'visibility','none');}
+   for(const id of [...SCENE_LAYERS,...(this.waterBands||[])])if(this.map.getLayer(id)&&!this.hidden.has(id)){this.hidden.set(id,this.map.getLayoutProperty(id,'visibility')||'visible');this.map.setLayoutProperty(id,'visibility','none');}
    const meta=await this.countyMeta();
    for(const e of Object.keys(meta.events)){
     const id='county-'+e;
