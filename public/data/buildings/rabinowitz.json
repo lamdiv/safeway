@@ -1,0 +1,270 @@
+{
+ "id": "rabinowitz",
+ "name": "Julis Romo Rabinowitz Building (Rabinowitz Hall)",
+ "address": "20 Washington Road, Princeton, NJ 08544",
+ "levels": [
+  {
+   "id": "B",
+   "name": "B Level",
+   "note": "Below ground. No confirmed starting points. In a flood, never go down here."
+  },
+  {
+   "id": "A",
+   "name": "Campus Level (A)"
+  },
+  {
+   "id": "1",
+   "name": "Level 1"
+  },
+  {
+   "id": "2",
+   "name": "Level 2"
+  },
+  {
+   "id": "3",
+   "name": "Level 3"
+  }
+ ],
+ "rooms": [
+  {
+   "number": "101",
+   "level": "1",
+   "use": "Classroom",
+   "routed": true
+  },
+  {
+   "number": "102",
+   "level": "1",
+   "use": "Meeting Room",
+   "routed": true
+  },
+  {
+   "number": "103",
+   "level": "1",
+   "use": "Pantry",
+   "routed": false
+  },
+  {
+   "number": "104",
+   "level": "1",
+   "use": "Copy Room",
+   "routed": false
+  },
+  {
+   "number": "116",
+   "level": "1",
+   "use": "Copy Room",
+   "routed": false
+  },
+  {
+   "number": "117",
+   "level": "1",
+   "use": "Multipurpose Forum",
+   "routed": false
+  },
+  {
+   "number": "134",
+   "level": "1",
+   "use": "Copy Room",
+   "routed": false
+  },
+  {
+   "number": "134B",
+   "level": "1",
+   "use": "Pantry",
+   "routed": false
+  },
+  {
+   "number": "198",
+   "level": "1",
+   "use": "Classroom",
+   "routed": true
+  },
+  {
+   "number": "200",
+   "level": "2",
+   "use": "Economics Common Room",
+   "routed": true
+  },
+  {
+   "number": "200A",
+   "level": "2",
+   "use": "Pantry",
+   "routed": false
+  },
+  {
+   "number": "201",
+   "level": "2",
+   "use": "Economics Meeting Room",
+   "routed": true
+  },
+  {
+   "number": "217",
+   "level": "2",
+   "use": "Economics Meeting Room",
+   "routed": false
+  },
+  {
+   "number": "234",
+   "level": "2",
+   "use": "Copy Room",
+   "routed": false
+  },
+  {
+   "number": "234B",
+   "level": "2",
+   "use": "Pantry",
+   "routed": false
+  },
+  {
+   "number": "296",
+   "level": "2",
+   "use": "Pantry",
+   "routed": false
+  },
+  {
+   "number": "298",
+   "level": "2",
+   "use": "Economics Meeting Room",
+   "routed": true
+  },
+  {
+   "number": "301",
+   "level": "3",
+   "use": "Meeting Room",
+   "routed": true
+  },
+  {
+   "number": "396",
+   "level": "3",
+   "use": "Copy Room and Pantry",
+   "routed": false
+  },
+  {
+   "number": "397",
+   "level": "3",
+   "use": "Meeting Room",
+   "routed": true
+  },
+  {
+   "number": "398",
+   "level": "3",
+   "use": "Pantry",
+   "routed": false
+  },
+  {
+   "number": "399",
+   "level": "3",
+   "use": "Multipurpose Room",
+   "routed": true
+  },
+  {
+   "number": "A01",
+   "level": "A",
+   "use": "Classroom",
+   "routed": true
+  },
+  {
+   "number": "A02",
+   "level": "A",
+   "use": "Classroom",
+   "routed": true
+  },
+  {
+   "number": "A12",
+   "level": "A",
+   "use": "Classroom",
+   "routed": false
+  },
+  {
+   "number": "A17",
+   "level": "A",
+   "use": "Classroom",
+   "routed": false
+  },
+  {
+   "number": "A34",
+   "level": "A",
+   "use": "Copy Room",
+   "routed": false
+  },
+  {
+   "number": "A34B",
+   "level": "A",
+   "use": "Pantry",
+   "routed": false
+  },
+  {
+   "number": "A87",
+   "level": "A",
+   "use": "Classroom",
+   "routed": false
+  },
+  {
+   "number": "A97",
+   "level": "A",
+   "use": "Classroom",
+   "routed": true
+  },
+  {
+   "number": "A98",
+   "level": "A",
+   "use": "Classroom",
+   "routed": true
+  }
+ ],
+ "stairway": {
+  "name": "Stairway 7",
+  "serves": [
+   "A",
+   "1",
+   "2",
+   "3"
+  ],
+  "source": "AccessAble survey of the building (published accessibility guide)"
+ },
+ "exit": {
+  "name": "Shapiro Walk entrance",
+  "where": "on the Stairway 7 landing between Level A and Level 1",
+  "note": "The exterior approach has steps.",
+  "source": "AccessAble survey"
+ },
+ "assembly": "Drill Assembly Point · high ground west of the building",
+ "caveat": "Circulation from the published accessibility survey and the 2016 user guide. It is not the official emergency egress plan. In a real emergency follow posted signs and emergency personnel, and call 911 if you cannot get out.",
+ "matterport": {
+  "modelId": "P3S6VUTP3qB",
+  "name": "Princeton - Rabinowitz Hall",
+  "floors": [
+   {
+    "label": "Floor 2",
+    "scanPoints": 36,
+    "hallwaySpanM": 31,
+    "toStair": {
+     "scanPoints": 36,
+     "medianM": 11,
+     "maxM": 18
+    }
+   },
+   {
+    "label": "Floor 3",
+    "scanPoints": 30,
+    "hallwaySpanM": 29,
+    "toStair": {
+     "scanPoints": 29,
+     "medianM": 15,
+     "maxM": 25
+    }
+   }
+  ],
+  "stair": {
+   "scanPoints": 1,
+   "riseM": 4,
+   "landingHeightM": 2
+  },
+  "roomTypes": [
+   "Hallway"
+  ],
+  "note": "From the Matterport scan: floors, scan points and the stair they link through. The scan carries no room numbers or exit labels, so those come from the user guide and the accessibility survey."
+ },
+ "generatedAt": "2026-11-15T10:42:29.027Z"
+}

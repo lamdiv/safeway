@@ -1,0 +1,1894 @@
+{
+ "event": "Hurricane Harvey 2017, Harris County",
+ "marksWithDepth": 230,
+ "marksInsideMappedExtent": 39,
+ "all": {
+  "n": 39,
+  "meanErrorFt": -0.49,
+  "meanAbsErrorFt": 2.55,
+  "rmseFt": 3.34,
+  "medianAbsErrorFt": 2.02,
+  "spearman": 0.21,
+  "zoneAgreement": 0.36,
+  "zoneWithinOne": 0.79,
+  "confusion": {
+   "low->low": 2,
+   "low->medium": 0,
+   "low->high": 1,
+   "medium->low": 8,
+   "medium->medium": 5,
+   "medium->high": 3,
+   "high->low": 7,
+   "high->medium": 6,
+   "high->high": 7
+  },
+  "observedMedianFt": 3.0,
+  "estimatedMedianFt": 1.43
+ },
+ "excellentGoodFair": {
+  "n": 33,
+  "meanErrorFt": -0.13,
+  "meanAbsErrorFt": 2.55,
+  "rmseFt": 3.31,
+  "medianAbsErrorFt": 2.02,
+  "spearman": 0.29,
+  "zoneAgreement": 0.3,
+  "zoneWithinOne": 0.82,
+  "confusion": {
+   "low->low": 2,
+   "low->medium": 0,
+   "low->high": 1,
+   "medium->low": 8,
+   "medium->medium": 4,
+   "medium->high": 3,
+   "high->low": 5,
+   "high->medium": 6,
+   "high->high": 4
+  },
+  "observedMedianFt": 2.5,
+  "estimatedMedianFt": 1.09
+ },
+ "notes": "observed = USGS height of water above ground at the mark; estimated = FwDET depth (mean of 3x3 cells, ~16.6 m grid) on the FEMA Harvey outline. Marks outside the rasterised outline are counted but not scored.",
+ "marks": [
+  {
+   "id": 25301,
+   "observedFt": 2.35,
+   "estimatedFt": null,
+   "inExtent": false,
+   "quality": "VP: > 0.40 ft",
+   "environment": "Riverine"
+  },
+  {
+   "id": 25303,
+   "observedFt": 2.8,
+   "estimatedFt": null,
+   "inExtent": false,
+   "quality": "Poor: +/- 0.40 ft",
+   "environment": "Riverine"
+  },
+  {
+   "id": 21481,
+   "observedFt": 4.85,
+   "estimatedFt": 0.9067103266716003,
+   "inExtent": true,
+   "quality": "Fair: +/- 0.20 ft",
+   "environment": "Riverine"
+  },
+  {
+   "id": 21489,
+   "observedFt": 4.3,
+   "estimatedFt": 0.3110927939414978,
+   "inExtent": true,
+   "quality": "Good: +/- 0.10 ft",
+   "environment": "Riverine"
+  },
+  {
+   "id": 21540,
+   "observedFt": 4.1,
+   "estimatedFt": 8.058335304260254,
+   "inExtent": true,
+   "quality": "Excellent: +/- 0.05 ft",
+   "environment": "Riverine"
+  },
+  {
+   "id": 21555,
+   "observedFt": 5.5,
+   "estimatedFt": 5.450160503387451,
+   "inExtent": true,
+   "quality": "Excellent: +/- 0.05 ft",
+   "environment": "Riverine"
+  },
+  {
+   "id": 21563,
+   "observedFt": 3.3,
+   "estimatedFt": 3.700411796569824,
+   "inExtent": true,
+   "quality": "Poor: +/- 0.40 ft",
+   "environment": "Riverine"
+  },
+  {
+   "id": 21568,
+   "observedFt": 1.5,
+   "estimatedFt": null,
+   "inExtent": false,
+   "quality": "Excellent: +/- 0.05 ft",
+   "environment": "Riverine"
+  },
+  {
+   "id": 21577,
+   "observedFt": 0.5,
+   "estimatedFt": null,
+   "inExtent": false,
+   "quality": "Fair: +/- 0.20 ft",
+   "environment": "Riverine"
+  },
+  {
+   "id": 22828,
+   "observedFt": 2.85,
+   "estimatedFt": null,
+   "inExtent": false,
+   "quality": "Good: +/- 0.10 ft",
+   "environment": "Riverine"
+  },
+  {
+   "id": 22830,
+   "observedFt": 1.65,
+   "estimatedFt": null,
+   "inExtent": false,
+   "quality": "Good: +/- 0.10 ft",
+   "environment": "Riverine"
+  },
+  {
+   "id": 21966,
+   "observedFt": 5.8,
+   "estimatedFt": 2.8802831172943115,
+   "inExtent": true,
+   "quality": "Good: +/- 0.10 ft",
+   "environment": "Riverine"
+  },
+  {
+   "id": 22204,
+   "observedFt": 3.5,
+   "estimatedFt": 2.4751813411712646,
+   "inExtent": true,
+   "quality": "Fair: +/- 0.20 ft",
+   "environment": "Riverine"
+  },
+  {
+   "id": 22205,
+   "observedFt": 3.5,
+   "estimatedFt": 2.4751813411712646,
+   "inExtent": true,
+   "quality": "Fair: +/- 0.20 ft",
+   "environment": "Riverine"
+  },
+  {
+   "id": 22217,
+   "observedFt": 1.25,
+   "estimatedFt": 0.1586526483297348,
+   "inExtent": true,
+   "quality": "Good: +/- 0.10 ft",
+   "environment": "Riverine"
+  },
+  {
+   "id": 22218,
+   "observedFt": 1.25,
+   "estimatedFt": 0.1586526483297348,
+   "inExtent": true,
+   "quality": "Good: +/- 0.10 ft",
+   "environment": "Riverine"
+  },
+  {
+   "id": 22222,
+   "observedFt": 2.4,
+   "estimatedFt": 0.38016247749328613,
+   "inExtent": true,
+   "quality": "Fair: +/- 0.20 ft",
+   "environment": "Riverine"
+  },
+  {
+   "id": 22223,
+   "observedFt": 0.35,
+   "estimatedFt": 0.4197311997413635,
+   "inExtent": true,
+   "quality": "Fair: +/- 0.20 ft",
+   "environment": "Riverine"
+  },
+  {
+   "id": 23393,
+   "observedFt": 0.74,
+   "estimatedFt": null,
+   "inExtent": false,
+   "quality": "Fair: +/- 0.20 ft",
+   "environment": "Riverine"
+  },
+  {
+   "id": 23395,
+   "observedFt": 1.02,
+   "estimatedFt": null,
+   "inExtent": false,
+   "quality": "Excellent: +/- 0.05 ft",
+   "environment": "Riverine"
+  },
+  {
+   "id": 23394,
+   "observedFt": 2.21,
+   "estimatedFt": null,
+   "inExtent": false,
+   "quality": "Excellent: +/- 0.05 ft",
+   "environment": "Riverine"
+  },
+  {
+   "id": 23401,
+   "observedFt": 2.14,
+   "estimatedFt": null,
+   "inExtent": false,
+   "quality": "Fair: +/- 0.20 ft",
+   "environment": "Riverine"
+  },
+  {
+   "id": 23399,
+   "observedFt": 1.1,
+   "estimatedFt": null,
+   "inExtent": false,
+   "quality": "Good: +/- 0.10 ft",
+   "environment": "Riverine"
+  },
+  {
+   "id": 23400,
+   "observedFt": 1.59,
+   "estimatedFt": null,
+   "inExtent": false,
+   "quality": "Fair: +/- 0.20 ft",
+   "environment": "Riverine"
+  },
+  {
+   "id": 23402,
+   "observedFt": 1.25,
+   "estimatedFt": null,
+   "inExtent": false,
+   "quality": "Fair: +/- 0.20 ft",
+   "environment": "Riverine"
+  },
+  {
+   "id": 23403,
+   "observedFt": 2.62,
+   "estimatedFt": null,
+   "inExtent": false,
+   "quality": "Poor: +/- 0.40 ft",
+   "environment": "Riverine"
+  },
+  {
+   "id": 23406,
+   "observedFt": 4.18,
+   "estimatedFt": null,
+   "inExtent": false,
+   "quality": "Fair: +/- 0.20 ft",
+   "environment": "Riverine"
+  },
+  {
+   "id": 23404,
+   "observedFt": 2.84,
+   "estimatedFt": null,
+   "inExtent": false,
+   "quality": "Excellent: +/- 0.05 ft",
+   "environment": "Riverine"
+  },
+  {
+   "id": 23405,
+   "observedFt": 4.3,
+   "estimatedFt": null,
+   "inExtent": false,
+   "quality": "Good: +/- 0.10 ft",
+   "environment": "Riverine"
+  },
+  {
+   "id": 23410,
+   "observedFt": 5.7,
+   "estimatedFt": null,
+   "inExtent": false,
+   "quality": "Excellent: +/- 0.05 ft",
+   "environment": "Riverine"
+  },
+  {
+   "id": 23374,
+   "observedFt": 4.19,
+   "estimatedFt": null,
+   "inExtent": false,
+   "quality": "Good: +/- 0.10 ft",
+   "environment": "Riverine"
+  },
+  {
+   "id": 23376,
+   "observedFt": 4.2,
+   "estimatedFt": null,
+   "inExtent": false,
+   "quality": "Poor: +/- 0.40 ft",
+   "environment": "Riverine"
+  },
+  {
+   "id": 23378,
+   "observedFt": 1.28,
+   "estimatedFt": null,
+   "inExtent": false,
+   "quality": "Good: +/- 0.10 ft",
+   "environment": "Riverine"
+  },
+  {
+   "id": 23375,
+   "observedFt": 4.27,
+   "estimatedFt": null,
+   "inExtent": false,
+   "quality": "Fair: +/- 0.20 ft",
+   "environment": "Riverine"
+  },
+  {
+   "id": 23380,
+   "observedFt": 2.59,
+   "estimatedFt": null,
+   "inExtent": false,
+   "quality": "Excellent: +/- 0.05 ft",
+   "environment": "Riverine"
+  },
+  {
+   "id": 23381,
+   "observedFt": 5.07,
+   "estimatedFt": null,
+   "inExtent": false,
+   "quality": "Excellent: +/- 0.05 ft",
+   "environment": "Riverine"
+  },
+  {
+   "id": 23377,
+   "observedFt": 1.02,
+   "estimatedFt": null,
+   "inExtent": false,
+   "quality": "Excellent: +/- 0.05 ft",
+   "environment": "Riverine"
+  },
+  {
+   "id": 23985,
+   "observedFt": 4.52,
+   "estimatedFt": null,
+   "inExtent": false,
+   "quality": "Excellent: +/- 0.05 ft",
+   "environment": "Riverine"
+  },
+  {
+   "id": 23986,
+   "observedFt": 4.55,
+   "estimatedFt": null,
+   "inExtent": false,
+   "quality": "Good: +/- 0.10 ft",
+   "environment": "Riverine"
+  },
+  {
+   "id": 23502,
+   "observedFt": 4.31,
+   "estimatedFt": null,
+   "inExtent": false,
+   "quality": "Excellent: +/- 0.05 ft",
+   "environment": "Riverine"
+  },
+  {
+   "id": 23503,
+   "observedFt": 4.05,
+   "estimatedFt": null,
+   "inExtent": false,
+   "quality": "Excellent: +/- 0.05 ft",
+   "environment": "Riverine"
+  },
+  {
+   "id": 23505,
+   "observedFt": 4.4,
+   "estimatedFt": null,
+   "inExtent": false,
+   "quality": "Excellent: +/- 0.05 ft",
+   "environment": "Riverine"
+  },
+  {
+   "id": 23506,
+   "observedFt": 5.05,
+   "estimatedFt": null,
+   "inExtent": false,
+   "quality": "Excellent: +/- 0.05 ft",
+   "environment": "Riverine"
+  },
+  {
+   "id": 23508,
+   "observedFt": 1.94,
+   "estimatedFt": null,
+   "inExtent": false,
+   "quality": "Good: +/- 0.10 ft",
+   "environment": "Riverine"
+  },
+  {
+   "id": 23514,
+   "observedFt": 5.93,
+   "estimatedFt": null,
+   "inExtent": false,
+   "quality": "Excellent: +/- 0.05 ft",
+   "environment": "Riverine"
+  },
+  {
+   "id": 23515,
+   "observedFt": 5.33,
+   "estimatedFt": null,
+   "inExtent": false,
+   "quality": "Fair: +/- 0.20 ft",
+   "environment": "Riverine"
+  },
+  {
+   "id": 23520,
+   "observedFt": 3.45,
+   "estimatedFt": null,
+   "inExtent": false,
+   "quality": "Excellent: +/- 0.05 ft",
+   "environment": "Riverine"
+  },
+  {
+   "id": 23521,
+   "observedFt": 4.46,
+   "estimatedFt": null,
+   "inExtent": false,
+   "quality": "Excellent: +/- 0.05 ft",
+   "environment": "Riverine"
+  },
+  {
+   "id": 23649,
+   "observedFt": 2.16,
+   "estimatedFt": null,
+   "inExtent": false,
+   "quality": "Good: +/- 0.10 ft",
+   "environment": "Riverine"
+  },
+  {
+   "id": 23650,
+   "observedFt": 5.29,
+   "estimatedFt": null,
+   "inExtent": false,
+   "quality": "Excellent: +/- 0.05 ft",
+   "environment": "Riverine"
+  },
+  {
+   "id": 23656,
+   "observedFt": 5.2,
+   "estimatedFt": null,
+   "inExtent": false,
+   "quality": "Excellent: +/- 0.05 ft",
+   "environment": "Riverine"
+  },
+  {
+   "id": 23657,
+   "observedFt": 6.27,
+   "estimatedFt": null,
+   "inExtent": false,
+   "quality": "Excellent: +/- 0.05 ft",
+   "environment": "Riverine"
+  },
+  {
+   "id": 23659,
+   "observedFt": 3.07,
+   "estimatedFt": null,
+   "inExtent": false,
+   "quality": "Excellent: +/- 0.05 ft",
+   "environment": "Riverine"
+  },
+  {
+   "id": 23660,
+   "observedFt": 2.22,
+   "estimatedFt": null,
+   "inExtent": false,
+   "quality": "Excellent: +/- 0.05 ft",
+   "environment": "Riverine"
+  },
+  {
+   "id": 23664,
+   "observedFt": 1.81,
+   "estimatedFt": null,
+   "inExtent": false,
+   "quality": "Excellent: +/- 0.05 ft",
+   "environment": "Riverine"
+  },
+  {
+   "id": 23665,
+   "observedFt": 2.42,
+   "estimatedFt": null,
+   "inExtent": false,
+   "quality": "Good: +/- 0.10 ft",
+   "environment": "Riverine"
+  },
+  {
+   "id": 23668,
+   "observedFt": 1.23,
+   "estimatedFt": null,
+   "inExtent": false,
+   "quality": "Excellent: +/- 0.05 ft",
+   "environment": "Riverine"
+  },
+  {
+   "id": 23813,
+   "observedFt": 7.6,
+   "estimatedFt": null,
+   "inExtent": false,
+   "quality": "Excellent: +/- 0.05 ft",
+   "environment": "Riverine"
+  },
+  {
+   "id": 23814,
+   "observedFt": 2.86,
+   "estimatedFt": null,
+   "inExtent": false,
+   "quality": "Excellent: +/- 0.05 ft",
+   "environment": "Riverine"
+  },
+  {
+   "id": 23816,
+   "observedFt": 1.69,
+   "estimatedFt": null,
+   "inExtent": false,
+   "quality": "Excellent: +/- 0.05 ft",
+   "environment": "Riverine"
+  },
+  {
+   "id": 23817,
+   "observedFt": 1.69,
+   "estimatedFt": null,
+   "inExtent": false,
+   "quality": "Excellent: +/- 0.05 ft",
+   "environment": "Riverine"
+  },
+  {
+   "id": 24508,
+   "observedFt": 1.69,
+   "estimatedFt": null,
+   "inExtent": false,
+   "quality": "Fair: +/- 0.20 ft",
+   "environment": "Riverine"
+  },
+  {
+   "id": 24509,
+   "observedFt": 1.13,
+   "estimatedFt": null,
+   "inExtent": false,
+   "quality": "Poor: +/- 0.40 ft",
+   "environment": "Riverine"
+  },
+  {
+   "id": 24513,
+   "observedFt": 1.04,
+   "estimatedFt": null,
+   "inExtent": false,
+   "quality": "Poor: +/- 0.40 ft",
+   "environment": "Riverine"
+  },
+  {
+   "id": 24514,
+   "observedFt": 4.62,
+   "estimatedFt": null,
+   "inExtent": false,
+   "quality": "Good: +/- 0.10 ft",
+   "environment": "Riverine"
+  },
+  {
+   "id": 24515,
+   "observedFt": 4.44,
+   "estimatedFt": null,
+   "inExtent": false,
+   "quality": "Excellent: +/- 0.05 ft",
+   "environment": "Riverine"
+  },
+  {
+   "id": 24517,
+   "observedFt": 5.06,
+   "estimatedFt": null,
+   "inExtent": false,
+   "quality": "Good: +/- 0.10 ft",
+   "environment": "Riverine"
+  },
+  {
+   "id": 24518,
+   "observedFt": 5.01,
+   "estimatedFt": null,
+   "inExtent": false,
+   "quality": "Good: +/- 0.10 ft",
+   "environment": "Riverine"
+  },
+  {
+   "id": 24521,
+   "observedFt": 4.08,
+   "estimatedFt": null,
+   "inExtent": false,
+   "quality": "Good: +/- 0.10 ft",
+   "environment": "Riverine"
+  },
+  {
+   "id": 24520,
+   "observedFt": 4.84,
+   "estimatedFt": null,
+   "inExtent": false,
+   "quality": "Fair: +/- 0.20 ft",
+   "environment": "Riverine"
+  },
+  {
+   "id": 24523,
+   "observedFt": 3.34,
+   "estimatedFt": null,
+   "inExtent": false,
+   "quality": "Excellent: +/- 0.05 ft",
+   "environment": "Riverine"
+  },
+  {
+   "id": 24524,
+   "observedFt": 3.14,
+   "estimatedFt": null,
+   "inExtent": false,
+   "quality": "Good: +/- 0.10 ft",
+   "environment": "Riverine"
+  },
+  {
+   "id": 24526,
+   "observedFt": 2.0,
+   "estimatedFt": null,
+   "inExtent": false,
+   "quality": "Excellent: +/- 0.05 ft",
+   "environment": "Riverine"
+  },
+  {
+   "id": 24527,
+   "observedFt": 1.77,
+   "estimatedFt": null,
+   "inExtent": false,
+   "quality": "Excellent: +/- 0.05 ft",
+   "environment": "Riverine"
+  },
+  {
+   "id": 24529,
+   "observedFt": 1.93,
+   "estimatedFt": null,
+   "inExtent": false,
+   "quality": "Excellent: +/- 0.05 ft",
+   "environment": "Riverine"
+  },
+  {
+   "id": 24530,
+   "observedFt": 1.72,
+   "estimatedFt": null,
+   "inExtent": false,
+   "quality": "Excellent: +/- 0.05 ft",
+   "environment": "Riverine"
+  },
+  {
+   "id": 24535,
+   "observedFt": 1.23,
+   "estimatedFt": null,
+   "inExtent": false,
+   "quality": "Excellent: +/- 0.05 ft",
+   "environment": "Riverine"
+  },
+  {
+   "id": 24536,
+   "observedFt": 0.66,
+   "estimatedFt": null,
+   "inExtent": false,
+   "quality": "Excellent: +/- 0.05 ft",
+   "environment": "Riverine"
+  },
+  {
+   "id": 24539,
+   "observedFt": 2.29,
+   "estimatedFt": null,
+   "inExtent": false,
+   "quality": "Good: +/- 0.10 ft",
+   "environment": "Riverine"
+  },
+  {
+   "id": 24540,
+   "observedFt": 2.9,
+   "estimatedFt": null,
+   "inExtent": false,
+   "quality": "Good: +/- 0.10 ft",
+   "environment": "Riverine"
+  },
+  {
+   "id": 24541,
+   "observedFt": 2.08,
+   "estimatedFt": null,
+   "inExtent": false,
+   "quality": "Excellent: +/- 0.05 ft",
+   "environment": "Riverine"
+  },
+  {
+   "id": 24542,
+   "observedFt": 2.01,
+   "estimatedFt": null,
+   "inExtent": false,
+   "quality": "Excellent: +/- 0.05 ft",
+   "environment": "Riverine"
+  },
+  {
+   "id": 21747,
+   "observedFt": 5.98,
+   "estimatedFt": null,
+   "inExtent": false,
+   "quality": "Good: +/- 0.10 ft",
+   "environment": "Riverine"
+  },
+  {
+   "id": 21752,
+   "observedFt": 5.25,
+   "estimatedFt": null,
+   "inExtent": false,
+   "quality": "Good: +/- 0.10 ft",
+   "environment": "Riverine"
+  },
+  {
+   "id": 21859,
+   "observedFt": 1.6,
+   "estimatedFt": null,
+   "inExtent": false,
+   "quality": "Fair: +/- 0.20 ft",
+   "environment": "Riverine"
+  },
+  {
+   "id": 21864,
+   "observedFt": 1.52,
+   "estimatedFt": null,
+   "inExtent": false,
+   "quality": "Good: +/- 0.10 ft",
+   "environment": "Riverine"
+  },
+  {
+   "id": 21865,
+   "observedFt": 2.72,
+   "estimatedFt": null,
+   "inExtent": false,
+   "quality": "Good: +/- 0.10 ft",
+   "environment": "Riverine"
+  },
+  {
+   "id": 21872,
+   "observedFt": 5.74,
+   "estimatedFt": null,
+   "inExtent": false,
+   "quality": "Good: +/- 0.10 ft",
+   "environment": "Riverine"
+  },
+  {
+   "id": 21873,
+   "observedFt": 5.96,
+   "estimatedFt": null,
+   "inExtent": false,
+   "quality": "Good: +/- 0.10 ft",
+   "environment": "Riverine"
+  },
+  {
+   "id": 22019,
+   "observedFt": 1.95,
+   "estimatedFt": null,
+   "inExtent": false,
+   "quality": "Poor: +/- 0.40 ft",
+   "environment": "Riverine"
+  },
+  {
+   "id": 22029,
+   "observedFt": 2.65,
+   "estimatedFt": null,
+   "inExtent": false,
+   "quality": "Poor: +/- 0.40 ft",
+   "environment": "Riverine"
+  },
+  {
+   "id": 22030,
+   "observedFt": 2.64,
+   "estimatedFt": null,
+   "inExtent": false,
+   "quality": "Poor: +/- 0.40 ft",
+   "environment": "Riverine"
+  },
+  {
+   "id": 22031,
+   "observedFt": 0.58,
+   "estimatedFt": null,
+   "inExtent": false,
+   "quality": "Good: +/- 0.10 ft",
+   "environment": "Riverine"
+  },
+  {
+   "id": 22032,
+   "observedFt": 0.91,
+   "estimatedFt": null,
+   "inExtent": false,
+   "quality": "Fair: +/- 0.20 ft",
+   "environment": "Riverine"
+  },
+  {
+   "id": 22033,
+   "observedFt": 1.29,
+   "estimatedFt": null,
+   "inExtent": false,
+   "quality": "Good: +/- 0.10 ft",
+   "environment": "Riverine"
+  },
+  {
+   "id": 22034,
+   "observedFt": 1.47,
+   "estimatedFt": null,
+   "inExtent": false,
+   "quality": "Fair: +/- 0.20 ft",
+   "environment": "Riverine"
+  },
+  {
+   "id": 22608,
+   "observedFt": 2.24,
+   "estimatedFt": null,
+   "inExtent": false,
+   "quality": "Good: +/- 0.10 ft",
+   "environment": "Riverine"
+  },
+  {
+   "id": 22609,
+   "observedFt": 1.96,
+   "estimatedFt": null,
+   "inExtent": false,
+   "quality": "Good: +/- 0.10 ft",
+   "environment": "Riverine"
+  },
+  {
+   "id": 22610,
+   "observedFt": 3.47,
+   "estimatedFt": null,
+   "inExtent": false,
+   "quality": "Fair: +/- 0.20 ft",
+   "environment": "Riverine"
+  },
+  {
+   "id": 22611,
+   "observedFt": 5.21,
+   "estimatedFt": null,
+   "inExtent": false,
+   "quality": "Good: +/- 0.10 ft",
+   "environment": "Riverine"
+  },
+  {
+   "id": 22842,
+   "observedFt": 2.03,
+   "estimatedFt": null,
+   "inExtent": false,
+   "quality": "Good: +/- 0.10 ft",
+   "environment": "Riverine"
+  },
+  {
+   "id": 22892,
+   "observedFt": 3.77,
+   "estimatedFt": null,
+   "inExtent": false,
+   "quality": "Poor: +/- 0.40 ft",
+   "environment": "Riverine"
+  },
+  {
+   "id": 22037,
+   "observedFt": 5.85,
+   "estimatedFt": null,
+   "inExtent": false,
+   "quality": "Poor: +/- 0.40 ft",
+   "environment": "Riverine"
+  },
+  {
+   "id": 22652,
+   "observedFt": 1.35,
+   "estimatedFt": null,
+   "inExtent": false,
+   "quality": "Good: +/- 0.10 ft",
+   "environment": "Riverine"
+  },
+  {
+   "id": 22840,
+   "observedFt": 2.18,
+   "estimatedFt": null,
+   "inExtent": false,
+   "quality": "Good: +/- 0.10 ft",
+   "environment": "Riverine"
+  },
+  {
+   "id": 22249,
+   "observedFt": 2.69,
+   "estimatedFt": null,
+   "inExtent": false,
+   "quality": "Good: +/- 0.10 ft",
+   "environment": "Riverine"
+  },
+  {
+   "id": 22883,
+   "observedFt": 2.78,
+   "estimatedFt": null,
+   "inExtent": false,
+   "quality": "Good: +/- 0.10 ft",
+   "environment": "Riverine"
+  },
+  {
+   "id": 22621,
+   "observedFt": 8.5,
+   "estimatedFt": null,
+   "inExtent": false,
+   "quality": "Good: +/- 0.10 ft",
+   "environment": "Riverine"
+  },
+  {
+   "id": 22040,
+   "observedFt": 2.23,
+   "estimatedFt": null,
+   "inExtent": false,
+   "quality": "Fair: +/- 0.20 ft",
+   "environment": "Riverine"
+  },
+  {
+   "id": 22646,
+   "observedFt": 0.4,
+   "estimatedFt": null,
+   "inExtent": false,
+   "quality": "Good: +/- 0.10 ft",
+   "environment": "Riverine"
+  },
+  {
+   "id": 22754,
+   "observedFt": 1.24,
+   "estimatedFt": null,
+   "inExtent": false,
+   "quality": "Good: +/- 0.10 ft",
+   "environment": "Riverine"
+  },
+  {
+   "id": 22810,
+   "observedFt": 1.82,
+   "estimatedFt": null,
+   "inExtent": false,
+   "quality": "Good: +/- 0.10 ft",
+   "environment": "Riverine"
+  },
+  {
+   "id": 22856,
+   "observedFt": 3.68,
+   "estimatedFt": null,
+   "inExtent": false,
+   "quality": "Good: +/- 0.10 ft",
+   "environment": "Riverine"
+  },
+  {
+   "id": 22890,
+   "observedFt": 5.8,
+   "estimatedFt": null,
+   "inExtent": false,
+   "quality": "Good: +/- 0.10 ft",
+   "environment": "Riverine"
+  },
+  {
+   "id": 22905,
+   "observedFt": 1.52,
+   "estimatedFt": null,
+   "inExtent": false,
+   "quality": "Fair: +/- 0.20 ft",
+   "environment": "Riverine"
+  },
+  {
+   "id": 22906,
+   "observedFt": 1.84,
+   "estimatedFt": null,
+   "inExtent": false,
+   "quality": "Fair: +/- 0.20 ft",
+   "environment": "Riverine"
+  },
+  {
+   "id": 22768,
+   "observedFt": 0.85,
+   "estimatedFt": null,
+   "inExtent": false,
+   "quality": "Good: +/- 0.10 ft",
+   "environment": "Riverine"
+  },
+  {
+   "id": 22809,
+   "observedFt": 2.24,
+   "estimatedFt": null,
+   "inExtent": false,
+   "quality": "Good: +/- 0.10 ft",
+   "environment": "Riverine"
+  },
+  {
+   "id": 22857,
+   "observedFt": 2.14,
+   "estimatedFt": null,
+   "inExtent": false,
+   "quality": "Good: +/- 0.10 ft",
+   "environment": "Riverine"
+  },
+  {
+   "id": 22884,
+   "observedFt": 2.25,
+   "estimatedFt": null,
+   "inExtent": false,
+   "quality": "Good: +/- 0.10 ft",
+   "environment": "Riverine"
+  },
+  {
+   "id": 22251,
+   "observedFt": 2.18,
+   "estimatedFt": null,
+   "inExtent": false,
+   "quality": "Good: +/- 0.10 ft",
+   "environment": "Riverine"
+  },
+  {
+   "id": 22893,
+   "observedFt": 4.57,
+   "estimatedFt": null,
+   "inExtent": false,
+   "quality": "Good: +/- 0.10 ft",
+   "environment": "Riverine"
+  },
+  {
+   "id": 22252,
+   "observedFt": 5.0,
+   "estimatedFt": null,
+   "inExtent": false,
+   "quality": "Good: +/- 0.10 ft",
+   "environment": "Riverine"
+  },
+  {
+   "id": 22894,
+   "observedFt": 2.75,
+   "estimatedFt": null,
+   "inExtent": false,
+   "quality": "Good: +/- 0.10 ft",
+   "environment": "Riverine"
+  },
+  {
+   "id": 22899,
+   "observedFt": 1.98,
+   "estimatedFt": null,
+   "inExtent": false,
+   "quality": "Good: +/- 0.10 ft",
+   "environment": "Riverine"
+  },
+  {
+   "id": 22900,
+   "observedFt": 2.16,
+   "estimatedFt": null,
+   "inExtent": false,
+   "quality": "Good: +/- 0.10 ft",
+   "environment": "Riverine"
+  },
+  {
+   "id": 22253,
+   "observedFt": 8.4,
+   "estimatedFt": null,
+   "inExtent": false,
+   "quality": "Good: +/- 0.10 ft",
+   "environment": "Riverine"
+  },
+  {
+   "id": 22256,
+   "observedFt": 2.93,
+   "estimatedFt": null,
+   "inExtent": false,
+   "quality": "Poor: +/- 0.40 ft",
+   "environment": "Riverine"
+  },
+  {
+   "id": 22420,
+   "observedFt": 3.46,
+   "estimatedFt": null,
+   "inExtent": false,
+   "quality": "Poor: +/- 0.40 ft",
+   "environment": "Riverine"
+  },
+  {
+   "id": 24255,
+   "observedFt": 9.63,
+   "estimatedFt": 9.400901794433594,
+   "inExtent": true,
+   "quality": "VP: > 0.40 ft",
+   "environment": "Riverine"
+  },
+  {
+   "id": 24257,
+   "observedFt": 7.5,
+   "estimatedFt": 4.083691120147705,
+   "inExtent": true,
+   "quality": "VP: > 0.40 ft",
+   "environment": "Riverine"
+  },
+  {
+   "id": 22423,
+   "observedFt": 2.75,
+   "estimatedFt": null,
+   "inExtent": false,
+   "quality": "Poor: +/- 0.40 ft",
+   "environment": "Riverine"
+  },
+  {
+   "id": 24264,
+   "observedFt": 4.8,
+   "estimatedFt": 0.013180118054151535,
+   "inExtent": true,
+   "quality": "VP: > 0.40 ft",
+   "environment": "Riverine"
+  },
+  {
+   "id": 24265,
+   "observedFt": 6.17,
+   "estimatedFt": 0.013180118054151535,
+   "inExtent": true,
+   "quality": "Poor: +/- 0.40 ft",
+   "environment": "Riverine"
+  },
+  {
+   "id": 22424,
+   "observedFt": 5.55,
+   "estimatedFt": null,
+   "inExtent": false,
+   "quality": "Poor: +/- 0.40 ft",
+   "environment": "Riverine"
+  },
+  {
+   "id": 22427,
+   "observedFt": 5.3,
+   "estimatedFt": null,
+   "inExtent": false,
+   "quality": "Poor: +/- 0.40 ft",
+   "environment": "Riverine"
+  },
+  {
+   "id": 22676,
+   "observedFt": 5.34,
+   "estimatedFt": null,
+   "inExtent": false,
+   "quality": "Fair: +/- 0.20 ft",
+   "environment": "Riverine"
+  },
+  {
+   "id": 22679,
+   "observedFt": 5.63,
+   "estimatedFt": null,
+   "inExtent": false,
+   "quality": "Poor: +/- 0.40 ft",
+   "environment": "Riverine"
+  },
+  {
+   "id": 22682,
+   "observedFt": 6.63,
+   "estimatedFt": null,
+   "inExtent": false,
+   "quality": "Poor: +/- 0.40 ft",
+   "environment": "Riverine"
+  },
+  {
+   "id": 22685,
+   "observedFt": 4.77,
+   "estimatedFt": null,
+   "inExtent": false,
+   "quality": "Poor: +/- 0.40 ft",
+   "environment": "Riverine"
+  },
+  {
+   "id": 22689,
+   "observedFt": 5.76,
+   "estimatedFt": null,
+   "inExtent": false,
+   "quality": "Good: +/- 0.10 ft",
+   "environment": "Riverine"
+  },
+  {
+   "id": 22691,
+   "observedFt": 6.22,
+   "estimatedFt": null,
+   "inExtent": false,
+   "quality": "Poor: +/- 0.40 ft",
+   "environment": "Riverine"
+  },
+  {
+   "id": 22692,
+   "observedFt": 5.91,
+   "estimatedFt": null,
+   "inExtent": false,
+   "quality": "Good: +/- 0.10 ft",
+   "environment": "Riverine"
+  },
+  {
+   "id": 22695,
+   "observedFt": 5.55,
+   "estimatedFt": null,
+   "inExtent": false,
+   "quality": "Poor: +/- 0.40 ft",
+   "environment": "Riverine"
+  },
+  {
+   "id": 22698,
+   "observedFt": 3.84,
+   "estimatedFt": null,
+   "inExtent": false,
+   "quality": "Fair: +/- 0.20 ft",
+   "environment": "Riverine"
+  },
+  {
+   "id": 22699,
+   "observedFt": 5.04,
+   "estimatedFt": null,
+   "inExtent": false,
+   "quality": "Poor: +/- 0.40 ft",
+   "environment": "Riverine"
+  },
+  {
+   "id": 22929,
+   "observedFt": 4.75,
+   "estimatedFt": null,
+   "inExtent": false,
+   "quality": "Fair: +/- 0.20 ft",
+   "environment": "Riverine"
+  },
+  {
+   "id": 22935,
+   "observedFt": 5.7,
+   "estimatedFt": null,
+   "inExtent": false,
+   "quality": "Excellent: +/- 0.05 ft",
+   "environment": "Riverine"
+  },
+  {
+   "id": 22939,
+   "observedFt": 3.2,
+   "estimatedFt": null,
+   "inExtent": false,
+   "quality": "Poor: +/- 0.40 ft",
+   "environment": "Riverine"
+  },
+  {
+   "id": 22943,
+   "observedFt": 1.67,
+   "estimatedFt": null,
+   "inExtent": false,
+   "quality": "Poor: +/- 0.40 ft",
+   "environment": "Riverine"
+  },
+  {
+   "id": 22945,
+   "observedFt": 1.2,
+   "estimatedFt": null,
+   "inExtent": false,
+   "quality": "Excellent: +/- 0.05 ft",
+   "environment": "Riverine"
+  },
+  {
+   "id": 22946,
+   "observedFt": 3.98,
+   "estimatedFt": null,
+   "inExtent": false,
+   "quality": "Poor: +/- 0.40 ft",
+   "environment": "Riverine"
+  },
+  {
+   "id": 22948,
+   "observedFt": 7.46,
+   "estimatedFt": null,
+   "inExtent": false,
+   "quality": "Fair: +/- 0.20 ft",
+   "environment": "Riverine"
+  },
+  {
+   "id": 22949,
+   "observedFt": 3.98,
+   "estimatedFt": null,
+   "inExtent": false,
+   "quality": "Poor: +/- 0.40 ft",
+   "environment": "Riverine"
+  },
+  {
+   "id": 22950,
+   "observedFt": 3.79,
+   "estimatedFt": null,
+   "inExtent": false,
+   "quality": "Fair: +/- 0.20 ft",
+   "environment": "Riverine"
+  },
+  {
+   "id": 22951,
+   "observedFt": 3.54,
+   "estimatedFt": null,
+   "inExtent": false,
+   "quality": "Fair: +/- 0.20 ft",
+   "environment": "Riverine"
+  },
+  {
+   "id": 22953,
+   "observedFt": 2.76,
+   "estimatedFt": null,
+   "inExtent": false,
+   "quality": "Fair: +/- 0.20 ft",
+   "environment": "Riverine"
+  },
+  {
+   "id": 22954,
+   "observedFt": 0.92,
+   "estimatedFt": null,
+   "inExtent": false,
+   "quality": "Poor: +/- 0.40 ft",
+   "environment": "Riverine"
+  },
+  {
+   "id": 22955,
+   "observedFt": 0.7,
+   "estimatedFt": null,
+   "inExtent": false,
+   "quality": "Excellent: +/- 0.05 ft",
+   "environment": "Riverine"
+  },
+  {
+   "id": 23135,
+   "observedFt": 2.65,
+   "estimatedFt": null,
+   "inExtent": false,
+   "quality": "Fair: +/- 0.20 ft",
+   "environment": "Riverine"
+  },
+  {
+   "id": 23141,
+   "observedFt": 3.04,
+   "estimatedFt": null,
+   "inExtent": false,
+   "quality": "Fair: +/- 0.20 ft",
+   "environment": "Riverine"
+  },
+  {
+   "id": 23143,
+   "observedFt": 3.32,
+   "estimatedFt": null,
+   "inExtent": false,
+   "quality": "Poor: +/- 0.40 ft",
+   "environment": "Riverine"
+  },
+  {
+   "id": 23144,
+   "observedFt": 3.28,
+   "estimatedFt": null,
+   "inExtent": false,
+   "quality": "Fair: +/- 0.20 ft",
+   "environment": "Riverine"
+  },
+  {
+   "id": 23145,
+   "observedFt": 0.9,
+   "estimatedFt": null,
+   "inExtent": false,
+   "quality": "Fair: +/- 0.20 ft",
+   "environment": "Riverine"
+  },
+  {
+   "id": 23155,
+   "observedFt": 2.33,
+   "estimatedFt": null,
+   "inExtent": false,
+   "quality": "Poor: +/- 0.40 ft",
+   "environment": "Riverine"
+  },
+  {
+   "id": 22941,
+   "observedFt": 3.62,
+   "estimatedFt": null,
+   "inExtent": false,
+   "quality": "Poor: +/- 0.40 ft",
+   "environment": "Riverine"
+  },
+  {
+   "id": 22460,
+   "observedFt": 1.33,
+   "estimatedFt": null,
+   "inExtent": false,
+   "quality": "Fair: +/- 0.20 ft",
+   "environment": "Riverine"
+  },
+  {
+   "id": 22475,
+   "observedFt": 2.21,
+   "estimatedFt": null,
+   "inExtent": false,
+   "quality": "Good: +/- 0.10 ft",
+   "environment": "Riverine"
+  },
+  {
+   "id": 22477,
+   "observedFt": 3.54,
+   "estimatedFt": null,
+   "inExtent": false,
+   "quality": "Good: +/- 0.10 ft",
+   "environment": "Riverine"
+  },
+  {
+   "id": 22479,
+   "observedFt": 1.0,
+   "estimatedFt": null,
+   "inExtent": false,
+   "quality": "Fair: +/- 0.20 ft",
+   "environment": "Riverine"
+  },
+  {
+   "id": 22498,
+   "observedFt": 4.4,
+   "estimatedFt": null,
+   "inExtent": false,
+   "quality": "Fair: +/- 0.20 ft",
+   "environment": "Riverine"
+  },
+  {
+   "id": 22497,
+   "observedFt": 4.41,
+   "estimatedFt": null,
+   "inExtent": false,
+   "quality": "Good: +/- 0.10 ft",
+   "environment": "Riverine"
+  },
+  {
+   "id": 23387,
+   "observedFt": 1.5,
+   "estimatedFt": 1.8575395345687866,
+   "inExtent": true,
+   "quality": "Excellent: +/- 0.05 ft",
+   "environment": "Riverine"
+  },
+  {
+   "id": 23397,
+   "observedFt": 0.62,
+   "estimatedFt": null,
+   "inExtent": false,
+   "quality": "Excellent: +/- 0.05 ft",
+   "environment": "Riverine"
+  },
+  {
+   "id": 23398,
+   "observedFt": 0.82,
+   "estimatedFt": null,
+   "inExtent": false,
+   "quality": "Fair: +/- 0.20 ft",
+   "environment": "Riverine"
+  },
+  {
+   "id": 23412,
+   "observedFt": 0.63,
+   "estimatedFt": null,
+   "inExtent": false,
+   "quality": "Poor: +/- 0.40 ft",
+   "environment": "Riverine"
+  },
+  {
+   "id": 25184,
+   "observedFt": 2.0,
+   "estimatedFt": 2.8704330921173096,
+   "inExtent": true,
+   "quality": "Excellent: +/- 0.05 ft",
+   "environment": "Riverine"
+  },
+  {
+   "id": 25191,
+   "observedFt": 2.1,
+   "estimatedFt": null,
+   "inExtent": false,
+   "quality": "Excellent: +/- 0.05 ft",
+   "environment": "Riverine"
+  },
+  {
+   "id": 25196,
+   "observedFt": 2.4,
+   "estimatedFt": null,
+   "inExtent": false,
+   "quality": "Good: +/- 0.10 ft",
+   "environment": "Riverine"
+  },
+  {
+   "id": 25169,
+   "observedFt": 3.4,
+   "estimatedFt": 0.30411744117736816,
+   "inExtent": true,
+   "quality": "Excellent: +/- 0.05 ft",
+   "environment": "Riverine"
+  },
+  {
+   "id": 25171,
+   "observedFt": 4.9,
+   "estimatedFt": null,
+   "inExtent": false,
+   "quality": "Good: +/- 0.10 ft",
+   "environment": "Riverine"
+  },
+  {
+   "id": 25175,
+   "observedFt": 1.2,
+   "estimatedFt": null,
+   "inExtent": false,
+   "quality": "Excellent: +/- 0.05 ft",
+   "environment": "Riverine"
+  },
+  {
+   "id": 25179,
+   "observedFt": 4.0,
+   "estimatedFt": null,
+   "inExtent": false,
+   "quality": "Excellent: +/- 0.05 ft",
+   "environment": "Riverine"
+  },
+  {
+   "id": 25182,
+   "observedFt": 0.6,
+   "estimatedFt": 0.0,
+   "inExtent": true,
+   "quality": "Fair: +/- 0.20 ft",
+   "environment": "Riverine"
+  },
+  {
+   "id": 25187,
+   "observedFt": 1.9,
+   "estimatedFt": null,
+   "inExtent": false,
+   "quality": "Excellent: +/- 0.05 ft",
+   "environment": "Riverine"
+  },
+  {
+   "id": 25198,
+   "observedFt": 1.6,
+   "estimatedFt": null,
+   "inExtent": false,
+   "quality": "Fair: +/- 0.20 ft",
+   "environment": "Riverine"
+  },
+  {
+   "id": 25188,
+   "observedFt": 1.8,
+   "estimatedFt": null,
+   "inExtent": false,
+   "quality": "Excellent: +/- 0.05 ft",
+   "environment": "Riverine"
+  },
+  {
+   "id": 25189,
+   "observedFt": 1.1,
+   "estimatedFt": null,
+   "inExtent": false,
+   "quality": "Good: +/- 0.10 ft",
+   "environment": "Riverine"
+  },
+  {
+   "id": 25193,
+   "observedFt": 1.1,
+   "estimatedFt": null,
+   "inExtent": false,
+   "quality": "Excellent: +/- 0.05 ft",
+   "environment": "Riverine"
+  },
+  {
+   "id": 25194,
+   "observedFt": 1.0,
+   "estimatedFt": null,
+   "inExtent": false,
+   "quality": "Fair: +/- 0.20 ft",
+   "environment": "Riverine"
+  },
+  {
+   "id": 25200,
+   "observedFt": 1.4,
+   "estimatedFt": null,
+   "inExtent": false,
+   "quality": "Excellent: +/- 0.05 ft",
+   "environment": "Riverine"
+  },
+  {
+   "id": 25201,
+   "observedFt": 1.9,
+   "estimatedFt": 11.508893013000488,
+   "inExtent": true,
+   "quality": "Excellent: +/- 0.05 ft",
+   "environment": "Riverine"
+  },
+  {
+   "id": 25202,
+   "observedFt": 3.7,
+   "estimatedFt": 0.12765155732631683,
+   "inExtent": true,
+   "quality": "Good: +/- 0.10 ft",
+   "environment": "Riverine"
+  },
+  {
+   "id": 25051,
+   "observedFt": 0.4,
+   "estimatedFt": null,
+   "inExtent": false,
+   "quality": "Excellent: +/- 0.05 ft",
+   "environment": "Riverine"
+  },
+  {
+   "id": 23894,
+   "observedFt": 1.89,
+   "estimatedFt": null,
+   "inExtent": false,
+   "quality": "Excellent: +/- 0.05 ft",
+   "environment": "Riverine"
+  },
+  {
+   "id": 23934,
+   "observedFt": 0.31,
+   "estimatedFt": null,
+   "inExtent": false,
+   "quality": "Excellent: +/- 0.05 ft",
+   "environment": "Riverine"
+  },
+  {
+   "id": 23940,
+   "observedFt": 0.7,
+   "estimatedFt": null,
+   "inExtent": false,
+   "quality": "Excellent: +/- 0.05 ft",
+   "environment": "Riverine"
+  },
+  {
+   "id": 23941,
+   "observedFt": 1.58,
+   "estimatedFt": null,
+   "inExtent": false,
+   "quality": "Good: +/- 0.10 ft",
+   "environment": "Riverine"
+  },
+  {
+   "id": 23942,
+   "observedFt": 0.8,
+   "estimatedFt": null,
+   "inExtent": false,
+   "quality": "Excellent: +/- 0.05 ft",
+   "environment": "Riverine"
+  },
+  {
+   "id": 23944,
+   "observedFt": 5.36,
+   "estimatedFt": null,
+   "inExtent": false,
+   "quality": "Good: +/- 0.10 ft",
+   "environment": "Riverine"
+  },
+  {
+   "id": 23945,
+   "observedFt": 5.08,
+   "estimatedFt": null,
+   "inExtent": false,
+   "quality": "Fair: +/- 0.20 ft",
+   "environment": "Riverine"
+  },
+  {
+   "id": 24465,
+   "observedFt": 1.23,
+   "estimatedFt": null,
+   "inExtent": false,
+   "quality": "Excellent: +/- 0.05 ft",
+   "environment": "Riverine"
+  },
+  {
+   "id": 24443,
+   "observedFt": 3.08,
+   "estimatedFt": null,
+   "inExtent": false,
+   "quality": "Good: +/- 0.10 ft",
+   "environment": "Riverine"
+  },
+  {
+   "id": 24493,
+   "observedFt": 4.41,
+   "estimatedFt": 9.108546257019043,
+   "inExtent": true,
+   "quality": "Excellent: +/- 0.05 ft",
+   "environment": "Riverine"
+  },
+  {
+   "id": 24490,
+   "observedFt": 0.78,
+   "estimatedFt": 5.6183857917785645,
+   "inExtent": true,
+   "quality": "Excellent: +/- 0.05 ft",
+   "environment": "Riverine"
+  },
+  {
+   "id": 24420,
+   "observedFt": 2.56,
+   "estimatedFt": null,
+   "inExtent": false,
+   "quality": "Good: +/- 0.10 ft",
+   "environment": "Riverine"
+  },
+  {
+   "id": 24496,
+   "observedFt": 2.26,
+   "estimatedFt": 9.685223579406738,
+   "inExtent": true,
+   "quality": "Fair: +/- 0.20 ft",
+   "environment": "Riverine"
+  },
+  {
+   "id": 24423,
+   "observedFt": 5.02,
+   "estimatedFt": null,
+   "inExtent": false,
+   "quality": "Good: +/- 0.10 ft",
+   "environment": "Riverine"
+  },
+  {
+   "id": 24468,
+   "observedFt": 4.09,
+   "estimatedFt": null,
+   "inExtent": false,
+   "quality": "Good: +/- 0.10 ft",
+   "environment": "Riverine"
+  },
+  {
+   "id": 24479,
+   "observedFt": 2.05,
+   "estimatedFt": 0.05749540776014328,
+   "inExtent": true,
+   "quality": "Excellent: +/- 0.05 ft",
+   "environment": "Riverine"
+  },
+  {
+   "id": 24482,
+   "observedFt": 3.7,
+   "estimatedFt": 1.4320719242095947,
+   "inExtent": true,
+   "quality": "Excellent: +/- 0.05 ft",
+   "environment": "Riverine"
+  },
+  {
+   "id": 33444,
+   "observedFt": 2.07,
+   "estimatedFt": null,
+   "inExtent": false,
+   "quality": "Fair: +/- 0.20 ft",
+   "environment": "Coastal"
+  },
+  {
+   "id": 29143,
+   "observedFt": 1.8,
+   "estimatedFt": null,
+   "inExtent": false,
+   "quality": "Excellent: +/- 0.05 ft",
+   "environment": "Riverine"
+  },
+  {
+   "id": 29144,
+   "observedFt": 3.5,
+   "estimatedFt": null,
+   "inExtent": false,
+   "quality": "Fair: +/- 0.20 ft",
+   "environment": "Riverine"
+  },
+  {
+   "id": 29156,
+   "observedFt": 1.5,
+   "estimatedFt": null,
+   "inExtent": false,
+   "quality": "Good: +/- 0.10 ft",
+   "environment": "Riverine"
+  },
+  {
+   "id": 29146,
+   "observedFt": 1.8,
+   "estimatedFt": null,
+   "inExtent": false,
+   "quality": "Fair: +/- 0.20 ft",
+   "environment": "Riverine"
+  },
+  {
+   "id": 29154,
+   "observedFt": 3.0,
+   "estimatedFt": 6.73944091796875,
+   "inExtent": true,
+   "quality": "Fair: +/- 0.20 ft",
+   "environment": "Riverine"
+  },
+  {
+   "id": 29153,
+   "observedFt": 2.5,
+   "estimatedFt": 6.73944091796875,
+   "inExtent": true,
+   "quality": "Fair: +/- 0.20 ft",
+   "environment": "Riverine"
+  },
+  {
+   "id": 33299,
+   "observedFt": 1.5,
+   "estimatedFt": 0.2104893922805786,
+   "inExtent": true,
+   "quality": "Fair: +/- 0.20 ft",
+   "environment": "Riverine"
+  },
+  {
+   "id": 33276,
+   "observedFt": 2.0,
+   "estimatedFt": null,
+   "inExtent": false,
+   "quality": "Fair: +/- 0.20 ft",
+   "environment": "Riverine"
+  },
+  {
+   "id": 33277,
+   "observedFt": 2.0,
+   "estimatedFt": null,
+   "inExtent": false,
+   "quality": "Fair: +/- 0.20 ft",
+   "environment": "Riverine"
+  },
+  {
+   "id": 33282,
+   "observedFt": 4.0,
+   "estimatedFt": 0.0,
+   "inExtent": true,
+   "quality": "Fair: +/- 0.20 ft",
+   "environment": "Riverine"
+  },
+  {
+   "id": 33275,
+   "observedFt": 2.5,
+   "estimatedFt": 1.955973744392395,
+   "inExtent": true,
+   "quality": "Fair: +/- 0.20 ft",
+   "environment": "Riverine"
+  },
+  {
+   "id": 33274,
+   "observedFt": 2.5,
+   "estimatedFt": 1.955973744392395,
+   "inExtent": true,
+   "quality": "Fair: +/- 0.20 ft",
+   "environment": "Riverine"
+  },
+  {
+   "id": 33279,
+   "observedFt": 4.0,
+   "estimatedFt": 1.0869345664978027,
+   "inExtent": true,
+   "quality": "Fair: +/- 0.20 ft",
+   "environment": "Riverine"
+  },
+  {
+   "id": 33278,
+   "observedFt": 4.0,
+   "estimatedFt": 1.0869345664978027,
+   "inExtent": true,
+   "quality": "Fair: +/- 0.20 ft",
+   "environment": "Riverine"
+  },
+  {
+   "id": 33273,
+   "observedFt": 2.4,
+   "estimatedFt": 0.6701849699020386,
+   "inExtent": true,
+   "quality": "Fair: +/- 0.20 ft",
+   "environment": "Riverine"
+  },
+  {
+   "id": 33272,
+   "observedFt": 1.0,
+   "estimatedFt": 0.21603743731975555,
+   "inExtent": true,
+   "quality": "Fair: +/- 0.20 ft",
+   "environment": "Riverine"
+  },
+  {
+   "id": 33271,
+   "observedFt": 1.0,
+   "estimatedFt": 0.21603743731975555,
+   "inExtent": true,
+   "quality": "Fair: +/- 0.20 ft",
+   "environment": "Riverine"
+  },
+  {
+   "id": 33196,
+   "observedFt": 2.5,
+   "estimatedFt": 1.8901383876800537,
+   "inExtent": true,
+   "quality": "Unknown/Historical",
+   "environment": "Riverine"
+  }
+ ]
+}

@@ -1,0 +1,82 @@
+{
+ "scenario": "brays",
+ "radiusM": 250,
+ "buildings": 5968,
+ "flooded": 3753,
+ "byZone": {
+  "high": 93,
+  "medium": 2005,
+  "low": 1655,
+  "dry": 2215
+ },
+ "wetAtVexcelGround": 1038,
+ "terrainCheck": {
+  "n": 5968,
+  "meanDiffFt": 2.22,
+  "meanAbsDiffFt": 2.26,
+  "medianAbsDiffFt": 2.17,
+  "within1Ft": 0.172,
+  "note": "Vexcel building ground elevation minus USGS 3DEP 5 m bare earth at the footprint centroid. Vexcel reports whole feet."
+ },
+ "homes": [
+  {
+   "person": "a",
+   "start": [
+    -95.447433,
+    29.697982
+   ],
+   "gridDepthFt": 3.6,
+   "photo": "houston-brays-a.jpg",
+   "nearestBuilding": {
+    "type": "single_family",
+    "vexcelGroundM": 16.46,
+    "dep3GroundM": 14.99,
+    "gridDepthFt": 1.8,
+    "padDepthFt": 0.0,
+    "heightM": null,
+    "stories": null,
+    "areaM2": 276.9
+   }
+  },
+  {
+   "person": "b",
+   "start": [
+    -95.452647,
+    29.696774
+   ],
+   "gridDepthFt": 1.6,
+   "photo": "houston-brays-b.jpg",
+   "nearestBuilding": {
+    "type": "single_family",
+    "vexcelGroundM": 16.46,
+    "dep3GroundM": 15.89,
+    "gridDepthFt": 0.0,
+    "padDepthFt": 0.0,
+    "heightM": null,
+    "stories": null,
+    "areaM2": 182.0
+   }
+  },
+  {
+   "person": "c",
+   "start": [
+    -95.448736,
+    29.693421
+   ],
+   "gridDepthFt": 0.3,
+   "photo": "houston-brays-c.jpg",
+   "nearestBuilding": {
+    "type": null,
+    "vexcelGroundM": 15.54,
+    "dep3GroundM": 15.38,
+    "gridDepthFt": 0.7,
+    "padDepthFt": 0.1,
+    "heightM": null,
+    "stories": null,
+    "areaM2": 217.0
+   }
+  }
+ ],
+ "source": "Vexcel API 2.0 property elements and ortho imagery (\u00a9 Vexcel Imaging US, Inc.); USGS 3DEP; SafeWay FwDET depth grid",
+ "generatedAt": "2026-11-15T10:15:52Z"
+}

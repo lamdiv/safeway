@@ -37,6 +37,7 @@
   0.5,
   0.0
  ],
+ "depthEncoding": "uint16le",
  "levels": [
   {
    "level": 1,
@@ -86,19 +87,19 @@
    "zone": "high",
    "minFt": 3,
    "maxFt": null,
-   "color": "#d9483b"
+   "color": "#d64541"
   },
   {
    "zone": "medium",
    "minFt": 1,
    "maxFt": 3,
-   "color": "#ee9a35"
+   "color": "#f2c12e"
   },
   {
    "zone": "low",
    "minFt": 0,
    "maxFt": 1,
-   "color": "#e8c547"
+   "color": "#3fae5a"
   }
  ],
  "areaKm2": {
@@ -159,5 +160,5 @@
   ]
  },
  "method": "FwDET (Cohen et al. 2018): water surface from the ground elevation at the nearest edge of the flood extent, smoothed (75 m, or 500 m on the broad Brays floodplain), minus USGS 3DEP 5 m bare-earth elevation.",
- "generatedAt": "2026-11-15T08:20:31+00:00"
+ "generatedAt": "2026-11-15T09:25:21+00:00"
 }

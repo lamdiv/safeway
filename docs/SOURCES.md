@@ -49,7 +49,32 @@ Built by `scripts/houston-floods.py` into `public/data/floods/<harvey|downtown|b
 - Residents and assembly points are exercise inventions placed by the script: one resident each in water over 3 ft, 1–3 ft and under 1 ft; assembly points are dry and at least ~150 m from the flood.
 - Harris County flood depth map (Flood map button): `scripts/houston-county-flood.py` builds XYZ tiles in `public/data/county-flood/` (z9–z13, ~19 MB) from all FEMA NFHL flood zones in Harris County DFIRM 48201C (floodway, 1% and 0.2% annual-chance areas, via the Esri mirror above) and USGS 3DEP elevation on a ~16.6 m grid aligned to zoom-13 tiles, with FwDET depth. 3DEP no-data cells over open water are excluded. HCFCD's modelled MAAPnext depth grids (https://fximgservices.hcfcd.org/arcgis/rest/services/MAAPNext/Depth_100YR/ImageServer, also 10YR and 500YR) would be a better source; the server returned HTTP 522 when this was built.
 - Houston 3D terrain: AWS Terrain Tiles (Terrarium encoding, https://s3.amazonaws.com/elevation-tiles-prod/terrarium/{z}/{x}/{y}.png), which use USGS 3DEP in the US. Shown with 4× vertical exaggeration.
+- Princeton drill: Lake Carnegie and Stony Brook outlines from OpenStreetMap (© OpenStreetMap contributors) seed an artificial connected-bathtub flood on USGS 3DEP 5 m elevation (`scripts/houston-floods.py`, scenario `princeton`). Rabinowitz Hall 3D tour: public Matterport model P3S6VUTP3qB.
+- Aerial base map: USGS The National Map, USGSImageryOnly (public domain) for US scenarios; Esri World Imagery (Esri, Maxar, Earthstar Geographics) for Rasuwa.
 
 ### Live response and continuous water
 
 The renderer uses MapLibre custom-layer projection and terrain elevation: https://maplibre.org/maplibre-gl-js/docs/API/interfaces/CustomLayerInterface/ and https://maplibre.org/maplibre-gl-js/docs/API/classes/Map/#queryterrainelevation . Visual interpolation does not add measurement resolution. Arrival countdowns derive from the authored scenario timeline, not a FEMA arrival forecast. Refuges and traversal windows are defined for the exercise and are not verified real shelters.
+
+## Vexcel (Houston drills)
+
+Vexcel API 2.0 (`https://api.vexcelgroup.com/v2`, key in `.env` as `VEXCEL_API_KEY`, sent only from the server). Imagery and building data © Vexcel Imaging US, Inc.
+
+- **Building footprints and ground elevation** (`GET /property/extract`, `scripts/vexcel-houston.py` → `public/data/vexcel/houston-<id>.geojson`): every building within 250 m of each drill resident (Harvey 1,148, downtown 839, Brays 5,968). Each footprint carries the drill's flood depth at the building (from the FwDET grid) and Vexcel's ground elevation next to USGS 3DEP.
+- **Terrain check:** Vexcel ground sits a median of 1.9–2.3 ft above USGS 3DEP 5 m bare earth at the footprints (Vexcel reports whole feet). That fits raised building pads, but a datum or surface-model difference can't be ruled out, so the zones still come from the 3DEP-based depth grid. The pad-level depth is shown as a second figure only.
+- **No terrain raster:** this key gets 403 for DSM/DTM layers, and Vexcel provides no flood depth. The flood terrain is still USGS 3DEP.
+- **Aerial base map**: the Layers panel's "Aerial" option is Vexcel ortho imagery only (no USGS or Esri). The server cuts it into 512 px Web Mercator tiles (`/api/demo/vexcel-tile/{z}/{x}/{y}` → `POST /ortho/extract`, srid 3857, zoom z+1). It is for the dashboard only, at zoom 11–20, over the Houston and Princeton drill areas, and is cached in `data/runtime/vexcel-cache/tiles/`. Vexcel stamps its credit on every tile, and the tiles are left unedited. Rasuwa (Nepal) has no Vexcel coverage (403), so it keeps the street map.
+- **Bird's-eye photos** (`POST /oriented/extract` obliques north/east/south/west, `POST /ortho/extract` top-down), served through `/api/demo/vexcel-photo` (dashboard or connected device only, Houston bounds only, cached in `data/runtime/vexcel-cache/`). Coverage at the drills runs from 2020 to 2026-01. It does not include Harvey (August 2017), so the photos show the area today, not the flood.
+
+## Rabinowitz Hall building guide (voice agent)
+
+`public/data/buildings/rabinowitz.json`, built by `scripts/rabinowitz-building.mjs`.
+
+- **Matterport Model API** (model P3S6VUTP3qB, read-only):
+  - floors, and 66 scan points with their scan-to-scan links;
+  - the staircase, found as the scan point at mid-height between the two scanned floors, which sit 4 m apart with a half-landing at 2 m;
+  - walking distance to the stair along the scan links: a median of 11 m (at most 18 m) on Floor 2, and a median of 15 m (at most 25 m) on Floor 3.
+  - The scan has no room numbers or exit labels.
+- **Room numbers and levels:** the 2016 JRR/LAS User Guide, pp. 24–28, via the team's ElevenLabs document.
+- **Stairway 7 (Levels A–3) and the Shapiro Walk entrance:** the published AccessAble survey.
+- **Caveat:** this is the circulation the building documents show, not the official emergency egress plan. The agent says so, and points to 911 and posted signs in a real emergency.

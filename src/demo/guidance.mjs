@@ -27,7 +27,14 @@ export function routeAssessment(id,p,position,modelTime,speed){
  return {safe:true,reason:'Route clears the modeled water within the authored travel window.'};
 }
 function etaText(seconds){if(seconds===null)return 'No inundation is modeled at your exact position.';if(seconds<=0)return 'The simulated flood has reached your location.';if(seconds<60)return `Estimated flood arrival is ${Math.max(1,Math.round(seconds))} scenario seconds.`;const rounded=Math.round(seconds/15)*15,minutes=Math.floor(rounded/60),rest=rounded%60;return `Estimated flood arrival is ${minutes} minute${minutes===1?'':'s'}${rest>=15?' and '+rest+' seconds':''} in the scenario.`;}
+/** Princeton drill (unchanged design): everyone is told to leave at Start with the scripted call; the zone comes
+ *  from the depth at their position and does not escalate, so each person gets one call unless the speed changes. */
+function drillGuidance(id,p,position,modelTime,speed){
+ const risk=zoneAssessment(id,position,modelTime,speed),zone=risk.impact==='high'?'red':risk.impact==='outside'?'green':'yellow';
+ return {...risk,zone,action:'evacuate',title:'Flood drill · leave now',instruction:p.instruction,message:p.instruction,route:p.route,destination:p.destination,refuge:null,routeWithdrawn:false,routeReason:'Scripted drill route to the high-ground assembly point.',rescueRequired:false,speed};
+}
 export function assessGuidance(id,p,{position=p.start,modelTime=0,speed=1,withdrawn=false}={}){
+ if(scenarios[id]?.callOnStart)return drillGuidance(id,p,position,modelTime,speed);
  const risk=zoneAssessment(id,position,modelTime,speed),route=risk.zone==='green'?{safe:false,reason:'No evacuation route is issued for the green monitoring group.'}:routeAssessment(id,p,position,modelTime,speed);
  const refuge=p.refuge?.definedForDemo&&p.refuge.approvedForDemo&&p.refuge.floorAboveGroundM>p.refuge.maxModeledDepthM+1&&distanceM(position,p.refuge.coordinates)<=60?p.refuge:null;
  const routeWithdrawn=withdrawn||!route.safe&&risk.zone!=='green';

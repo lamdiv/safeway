@@ -39,11 +39,17 @@ HARVEY_URL = 'http://www.hydroshare.org/resource/e8768f4cb4d5478a96d2b1cbd00d9e8
 THRESHOLDS = [12, 9, 7, 5.5, 4.5, 3.5, 2.7, 2.0, 1.4, 0.9, 0.5, 0.0]  # ft; the water level passes these thresholds 8 s apart (src/demo/raster-flood.mjs)
 LEVELS = [(1, 0, 1, '#cfe9f6'), (2, 1, 2, '#a3d3ee'), (3, 2, 3, '#72b9e3'), (4, 3, 4, '#4799d3'),
           (5, 4, 5, '#2b79bf'), (6, 5, 6, '#1d58a2'), (7, 6, None, '#123a78')]
-ZONES = [('high', 3, None, '#d9483b'), ('medium', 1, 3, '#ee9a35'), ('low', 0, 1, '#e8c547')]
+ZONES = [('high', 3, None, '#d64541'), ('medium', 1, 3, '#f2c12e'), ('low', 0, 1, '#3fae5a')]  # red / yellow / green
 SCENARIOS = {
     'harvey': {'bbox': (-95.235, 30.025, -95.170, 30.070), 'source': 'harvey'},
     'downtown': {'bbox': (-95.395, 29.745, -95.340, 29.782), 'source': 'fema'},
     'brays': {'bbox': (-95.480, 29.678, -95.415, 29.718), 'source': 'fema', 'sfhaOnly': True, 'smooth': 101},
+    # Artificial drill (deliberately not realistic): water rises out of Lake Carnegie and Stony Brook
+    # (OpenStreetMap) until it reaches Rabinowitz Hall with ~2 ft of water, about 47 m above the lake. Connected-bathtub model on 3DEP: a cell floods when it is lower
+    # than the water level AND connected to the lake/river through other flooded cells.
+    'princeton': {'bbox': (-74.680, 40.330, -74.630, 40.372), 'source': 'bathtub', 'seedNames': ['Lake Carnegie', 'Stony Brook'],
+                  'target': (-74.65547, 40.34909), 'targetDepthFt': 2.0,
+                  'people': [((-74.65547, 40.34909), (-74.66402, 40.34917)), ((-74.65528, 40.34916), (-74.66402, 40.34917))]},  # assembly: nearest dry high ground (66.5 m) at least 100 m from the water
 }
 
 def merc(lon, lat): return lon * 20037508.34 / 180, math.log(math.tan((90 + lat) * math.pi / 360)) * 6378137
@@ -100,6 +106,25 @@ def harvey_extent(bbox):
             if not g.is_empty: parts.append(g)
     return parts, {'dataset': 'FEMA Hurricane Harvey inundation boundaries, Harris County (NAD83)'}
 
+def osm_water(names):
+    """Lake / river polygons by name from the cached OpenStreetMap download (data/raw/princeton/osm-water.json)."""
+    from shapely.geometry import LineString
+    from shapely.ops import polygonize
+    d = json.load(open(os.path.join(RAW, 'princeton', 'osm-water.json'))); polys = []
+    for e in d['elements']:
+        if e.get('tags', {}).get('name') not in names: continue
+        if e['type'] == 'way': polys.append(shape({'type': 'Polygon', 'coordinates': [[(p['lon'], p['lat']) for p in e['geometry']]]}).buffer(0))
+        else:
+            lines = [LineString([(p['lon'], p['lat']) for p in m['geometry']]) for m in e.get('members', []) if m.get('role') == 'outer' and m.get('geometry')]
+            polys += [g.buffer(0) for g in polygonize(unary_union(lines))]
+    return polys
+
+def bathtub(dem, seed, level):
+    """Connected inundation: cells at or below `level` that connect to the seed water body."""
+    lab, _ = ndimage.label((dem <= level) | seed)
+    keep = np.unique(lab[seed]); keep = keep[keep > 0]
+    return np.isin(lab, keep)
+
 def rasterize(geoms, shape_, bbox):
     h, w = shape_; x0, y0, x1, y1 = bbox; img = Image.new('L', (w, h), 0); draw = ImageDraw.Draw(img)
     px = lambda ring: [((merc(x, y)[0] - x0) / (x1 - x0) * w, (y1 - merc(x, y)[1]) / (y1 - y0) * h) for x, y in ring]
@@ -154,19 +179,36 @@ def pick_people(depth, dry_dist, bbox_m, shape_):
     return [{'start': ll(*a), 'destination': ll(*b), 'depthFt': round(float(d[a]), 1)} for a, b in people]
 
 def build(sid, cfg):
-    bbox = cfg['bbox']; dem, bm = dem_for(sid, bbox)
-    geoms, info = harvey_extent(bbox) if cfg['source'] == 'harvey' else fema_extent(sid, bbox, cfg.get('sfhaOnly', False))
-    clip = box(*bbox); geoms = [g.intersection(clip) for g in geoms]
-    mask = rasterize(geoms, dem.shape, bm); depth = fwdet(dem, mask, cfg.get('smooth', 15)); h, w = mask.shape
+    bbox = cfg['bbox']; dem, bm = dem_for(sid, bbox); clip = box(*bbox); h, w = dem.shape
+    x0, y0, x1, y1 = bm
+    cell = lambda lon, lat: (int((y1 - merc(lon, lat)[1]) / (y1 - y0) * h), int((merc(lon, lat)[0] - x0) / (x1 - x0) * w))
+    if cfg['source'] == 'bathtub':
+        seed = rasterize([g.intersection(clip) for g in osm_water(cfg['seedNames'])], dem.shape, bm)
+        level = float(dem[cell(*cfg['target'])]) + cfg['targetDepthFt'] / FT
+        mask = bathtub(dem, seed, level); depth = np.where(mask, np.clip((level - dem) * FT, 0, None), np.nan)
+        info = {'dataset': 'Artificial drill flood: water rising out of Lake Carnegie and Stony Brook (OpenStreetMap) over USGS 3DEP elevation (connected-bathtub model)',
+                'waterLevelM': round(level, 2), 'lakeSurfaceM': round(float(np.median(dem[seed])), 2)}
+    else:
+        geoms, info = harvey_extent(bbox) if cfg['source'] == 'harvey' else fema_extent(sid, bbox, cfg.get('sfhaOnly', False))
+        geoms = [g.intersection(clip) for g in geoms]
+        mask = rasterize(geoms, dem.shape, bm); depth = fwdet(dem, mask, cfg.get('smooth', 15))
     d = np.nan_to_num(depth, nan=-1)
     folder = os.path.join(OUT, sid); os.makedirs(folder, exist_ok=True)
-    raw = np.where(d >= 0, 1 + np.clip(np.round(d * 10), 0, 253), 0).astype('uint8'); raw.tofile(os.path.join(folder, 'depth.bin'))
+    raw = np.where(d >= 0, 1 + np.clip(np.round(d * 10), 0, 65533), 0).astype('<u2'); raw.tofile(os.path.join(folder, 'depth.bin'))  # uint16 LE: 0 dry, else 1 + tenths of a foot
     paint([((d >= lo) & (d < (np.inf if hi is None else hi)), c) for _, lo, hi, c in ZONES], d, h, w).save(os.path.join(folder, 'zones.png'), optimize=True)
     dry_dist = ndimage.distance_transform_edt(~mask)
-    people = pick_people(depth, dry_dist, bm, mask.shape)
+    if cfg.get('people'):
+        ll = lambda y, x: [round(v, 6) for v in unmerc(x0 + (x + .5) / w * (x1 - x0), y1 - (y + .5) / h * (y1 - y0))]
+        people = [{'start': list(a), 'destination': list(b), 'depthFt': round(float(d[cell(*a)]), 1)} for a, b in cfg['people']]
+        for p in people:
+            r, c = cell(*p['destination'])
+            if d[r, c] >= 0 or dry_dist[r, c] < 20: raise SystemExit(f'{sid}: assembly point is flooded or within 100 m of the water')
+    else:
+        people = pick_people(depth, dry_dist, bm, mask.shape)
+    thresholds = THRESHOLDS if cfg['source'] != 'bathtub' else [round(float(np.nanmax(depth)) * (1 - k / (len(THRESHOLDS) - 1)), 2) for k in range(len(THRESHOLDS))]
     x0, y0, x1, y1 = bm; wl, nl = unmerc(x0, y1); el, sl = unmerc(x1, y0)
     cell = (RES * math.cos(math.radians((bbox[1] + bbox[3]) / 2))) ** 2 / 1e6
-    meta = {'id': sid, 'bounds': [[wl, nl], [el, nl], [el, sl], [wl, sl]], 'size': [w, h], 'resolutionM': RES, 'thresholdsFt': THRESHOLDS,
+    meta = {'id': sid, 'bounds': [[wl, nl], [el, nl], [el, sl], [wl, sl]], 'size': [w, h], 'resolutionM': RES, 'thresholdsFt': thresholds, 'depthEncoding': 'uint16le',
             'levels': [{'level': lv, 'minFt': lo, 'maxFt': hi, 'color': c} for lv, lo, hi, c in LEVELS],
             'zones': [{'zone': z, 'minFt': lo, 'maxFt': hi, 'color': c} for z, lo, hi, c in ZONES],
             'areaKm2': {'flooded': round(float(mask.sum()) * cell, 2), **{z: round(float(((d >= lo) & (d < (np.inf if hi is None else hi))).sum()) * cell, 2) for z, lo, hi, _ in ZONES}},

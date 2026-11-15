@@ -18,3 +18,9 @@ data/runtime/
 # Generated Matterport SDK distribution; reproducible from npm dependencies.
 public/matterport-assets/
 public/vendor/safeway-matterport.mjs
+
+# Python bytecode from the data scripts
+__pycache__/
+
+# Generated ElevenLabs client bundle (scripts/voice-setup.mjs)
+public/vendor/elevenlabs-client.mjs

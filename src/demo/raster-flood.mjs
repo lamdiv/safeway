@@ -7,7 +7,7 @@ export const TIMELINE={start:5,step:8};const FRAME_START=TIMELINE.start,FRAME_ST
 const merc=([lng,lat])=>[lng*20037508.34/180,Math.log(Math.tan((90+lat)*Math.PI/360))*6378137];
 
 export function loadRasterFlood(id){
- const dir=new URL(`../../public/data/floods/${id}/`,import.meta.url),meta=JSON.parse(readFileSync(new URL('meta.json',dir))),cells=new Uint8Array(readFileSync(new URL('depth.bin',dir)));
+ const dir=new URL(`../../public/data/floods/${id}/`,import.meta.url),meta=JSON.parse(readFileSync(new URL('meta.json',dir))),raw=readFileSync(new URL('depth.bin',dir)),cells=new Uint16Array(raw.buffer.slice(raw.byteOffset,raw.byteOffset+raw.length));  // uint16 LE: 0 dry, else 1 + tenths of a foot
  const [w,h]=meta.size;if(cells.length!==w*h)throw new Error('Depth grid size mismatch for '+id);
  const [x0,y1]=merc(meta.bounds[0]),[x1,y0]=merc(meta.bounds[2]);
  return {id,meta,cells,w,h,x0,y0,x1,y1,url:`/data/floods/${id}/`,frames:meta.thresholdsFt.length,near:new Map()};
@@ -23,4 +23,4 @@ export function frameTime(k){return FRAME_START+k*FRAME_STEP;}
 export function thresholdAt(thresholds,time){if(time<FRAME_START)return Infinity;const u=(time-FRAME_START)/FRAME_STEP,k=Math.floor(u);if(k>=thresholds.length-1)return thresholds.at(-1);return thresholds[k]+(thresholds[k+1]-thresholds[k])*(u-k);}
 /** True when water at least as deep as the current threshold is within `radius` metres of the point. */
 export function floodedNear(f,time,point,radius=0){const t=thresholdAt(f.meta.thresholdsFt,time);if(t===Infinity)return false;const d=radius?deepestNear(f,point,radius):depthAt(f,point);return d!==null&&d>=t;}
-export function zoneAt(f,point){const d=depthAt(f,point);if(d===null)return 'outside';return d>3?'high':d>=1?'medium':'low';}
+export function zoneAt(f,point){const d=depthAt(f,point);if(d===null)return 'outside';return d>=3?'high':d>=1?'medium':'low';}

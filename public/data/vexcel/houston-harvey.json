@@ -1,0 +1,82 @@
+{
+ "scenario": "harvey",
+ "radiusM": 250,
+ "buildings": 1148,
+ "flooded": 949,
+ "byZone": {
+  "high": 280,
+  "medium": 557,
+  "low": 112,
+  "dry": 199
+ },
+ "wetAtVexcelGround": 655,
+ "terrainCheck": {
+  "n": 1148,
+  "meanDiffFt": 3.62,
+  "meanAbsDiffFt": 5.08,
+  "medianAbsDiffFt": 1.87,
+  "within1Ft": 0.262,
+  "note": "Vexcel building ground elevation minus USGS 3DEP 5 m bare earth at the footprint centroid. Vexcel reports whole feet."
+ },
+ "homes": [
+  {
+   "person": "a",
+   "start": [
+    -95.202522,
+    30.047483
+   ],
+   "gridDepthFt": 4.0,
+   "photo": "houston-harvey-a.jpg",
+   "nearestBuilding": {
+    "type": null,
+    "vexcelGroundM": 16.76,
+    "dep3GroundM": 17.94,
+    "gridDepthFt": 2.0,
+    "padDepthFt": 5.9,
+    "heightM": null,
+    "stories": null,
+    "areaM2": 22.0
+   }
+  },
+  {
+   "person": "b",
+   "start": [
+    -95.197218,
+    30.046628
+   ],
+   "gridDepthFt": 1.2,
+   "photo": "houston-harvey-b.jpg",
+   "nearestBuilding": {
+    "type": "single_family",
+    "vexcelGroundM": 18.29,
+    "dep3GroundM": 18.15,
+    "gridDepthFt": 1.1,
+    "padDepthFt": 0.7,
+    "heightM": null,
+    "stories": null,
+    "areaM2": 232.8
+   }
+  },
+  {
+   "person": "c",
+   "start": [
+    -95.202253,
+    30.04282
+   ],
+   "gridDepthFt": 0.7,
+   "photo": "houston-harvey-c.jpg",
+   "nearestBuilding": {
+    "type": null,
+    "vexcelGroundM": 16.46,
+    "dep3GroundM": 16.71,
+    "gridDepthFt": 0.0,
+    "padDepthFt": 0.8,
+    "heightM": null,
+    "stories": null,
+    "areaM2": 145.1
+   }
+  }
+ ],
+ "source": "Vexcel API 2.0 property elements and ortho imagery (\u00a9 Vexcel Imaging US, Inc.); USGS 3DEP; SafeWay FwDET depth grid",
+ "generatedAt": "2026-11-15T10:15:32Z"
+}
